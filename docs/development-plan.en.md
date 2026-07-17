@@ -88,6 +88,8 @@ Commit: `chore: scaffold automation architecture and deterministic test site`.
 
 ### Milestone 1 — validated input and worker host
 
+Status: complete.
+
 1. Add JSON deserialization and validation at the host boundary.
 2. Add typed browser, retry, timeout, concurrency, storage, and artifact settings.
 3. Wire dependencies with `Microsoft.Extensions.Hosting`.
@@ -257,4 +259,3 @@ Commit: `docs: publish reproducible v1 automation evidence`.
 - Browser processes and contexts are always disposed.
 - No test depends on a public website or live credential.
 - The Russian plan is absent from `git ls-files` and ignored by `.git/info/exclude`.
-

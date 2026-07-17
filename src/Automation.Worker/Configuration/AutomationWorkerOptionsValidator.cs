@@ -1,0 +1,57 @@
+using Microsoft.Extensions.Options;
+
+namespace Automation.Worker.Configuration;
+
+public sealed class AutomationWorkerOptionsValidator : IValidateOptions<AutomationWorkerOptions>
+{
+    public ValidateOptionsResult Validate(string? name, AutomationWorkerOptions options)
+    {
+        var errors = new List<string>();
+
+        if (options.Browser.NavigationTimeoutSeconds <= 0)
+        {
+            errors.Add("Automation:Browser:NavigationTimeoutSeconds must be greater than zero.");
+        }
+
+        if (options.Browser.OperationTimeoutSeconds <= 0)
+        {
+            errors.Add("Automation:Browser:OperationTimeoutSeconds must be greater than zero.");
+        }
+
+        if (options.Retry.MaxAttempts is < 1 or > 20)
+        {
+            errors.Add("Automation:Retry:MaxAttempts must be between 1 and 20.");
+        }
+
+        if (options.Retry.BaseDelayMilliseconds < 0 ||
+            options.Retry.MaxDelayMilliseconds < options.Retry.BaseDelayMilliseconds)
+        {
+            errors.Add("Automation retry delays must be non-negative and max delay must not be less than base delay.");
+        }
+
+        if (options.Timeouts.WholeJobTimeoutSeconds <= 0)
+        {
+            errors.Add("Automation:Timeouts:WholeJobTimeoutSeconds must be greater than zero.");
+        }
+
+        if (options.Concurrency.MaxConcurrentJobs <= 0)
+        {
+            errors.Add("Automation:Concurrency:MaxConcurrentJobs must be greater than zero.");
+        }
+
+        if (string.IsNullOrWhiteSpace(options.Storage.ConnectionString))
+        {
+            errors.Add("Automation:Storage:ConnectionString is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(options.Artifacts.RootPath))
+        {
+            errors.Add("Automation:Artifacts:RootPath is required.");
+        }
+
+        return errors.Count == 0
+            ? ValidateOptionsResult.Success
+            : ValidateOptionsResult.Fail(errors);
+    }
+}
+

@@ -6,7 +6,8 @@ The project demonstrates idempotent job execution, checkpoint-based recovery,
 bounded concurrency, structured logging, failure artifacts, and deterministic
 end-to-end tests against a local FastAPI test site.
 
-> Status: architecture scaffold and runnable test site. The implementation is
+> Status: runnable worker intake with validation, JSON Lines input, typed
+> configuration, structured logs, and a deterministic test site. The implementation is
 > intentionally split into reviewable milestones in the
 > [development plan](docs/development-plan.en.md).
 
@@ -116,6 +117,23 @@ the system PATH:
 The FastAPI stand also has its own installable package boundary and CLI. See the
 [`test-stand` README](test-stand/README.md) and
 [ADR 0002](docs/adr/0002-package-ready-test-stand.md).
+
+## Run the worker intake (Milestone 1)
+
+The current worker uses an in-memory repository and a fake browser adapter;
+Playwright and SQLite are introduced in later milestones. It accepts one JSON
+object per line either from a file or standard input.
+
+```powershell
+.\eng\dotnet.ps1 run --project .\src\Automation.Worker\Automation.Worker.csproj `
+  -- --jobs .\samples\jobs.success.jsonl
+```
+
+The final JSON line is a machine-readable summary. Exit code `0` means every
+job completed; `2` means one or more input lines were rejected; `3` means a job
+failed; `4` means cancellation. The worker reads settings from
+[`appsettings.json`](src/Automation.Worker/appsettings.json); all timeout,
+retry, concurrency, storage, and artifact values are validated when it starts.
 
 ## Engineering principles
 
