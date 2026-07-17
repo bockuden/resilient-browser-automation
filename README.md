@@ -6,8 +6,8 @@ The project demonstrates idempotent job execution, checkpoint-based recovery,
 bounded concurrency, structured logging, failure artifacts, and deterministic
 end-to-end tests against a local FastAPI test site.
 
-> Status: runnable worker intake with validation, JSON Lines input, typed
-> configuration, structured logs, and a deterministic test site. The implementation is
+> Status: runnable worker with SQLite persistence, validated JSON Lines input,
+> typed configuration, structured logs, and a deterministic test site. The implementation is
 > intentionally split into reviewable milestones in the
 > [development plan](docs/development-plan.en.md).
 
@@ -120,9 +120,9 @@ The FastAPI stand also has its own installable package boundary and CLI. See the
 
 ## Run the worker intake (Milestone 1)
 
-The current worker uses an in-memory repository and a fake browser adapter;
-Playwright and SQLite are introduced in later milestones. It accepts one JSON
-object per line either from a file or standard input.
+The current worker persists jobs, items, attempts, and checkpoints in SQLite;
+it still uses a fake browser adapter until the Playwright milestone. It accepts
+one JSON object per line either from a file or standard input.
 
 ```powershell
 .\eng\dotnet.ps1 run --project .\src\Automation.Worker\Automation.Worker.csproj `
@@ -134,6 +134,8 @@ job completed; `2` means one or more input lines were rejected; `3` means a job
 failed; `4` means cancellation. The worker reads settings from
 [`appsettings.json`](src/Automation.Worker/appsettings.json); all timeout,
 retry, concurrency, storage, and artifact values are validated when it starts.
+`Automation:Storage:StaleRunningJobSeconds` defines when an interrupted
+`Running` job can be claimed again; completed jobs are never reopened.
 
 ## Engineering principles
 

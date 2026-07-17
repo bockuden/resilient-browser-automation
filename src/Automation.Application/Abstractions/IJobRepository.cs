@@ -6,12 +6,7 @@ public interface IJobRepository
 {
     Task<JobExecution?> FindAsync(string jobId, CancellationToken cancellationToken);
 
-    Task MarkRunningAsync(string jobId, CancellationToken cancellationToken);
-
-    Task StoreItemsAsync(
-        string jobId,
-        IReadOnlyCollection<CatalogItem> items,
-        CancellationToken cancellationToken);
+    Task<JobClaimResult> TryClaimAsync(string jobId, CancellationToken cancellationToken);
 
     Task MarkCompletedAsync(string jobId, CancellationToken cancellationToken);
 
@@ -23,4 +18,3 @@ public interface IJobRepository
 
     Task MarkCancelledAsync(string jobId, CancellationToken cancellationToken);
 }
-

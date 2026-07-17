@@ -8,6 +8,7 @@ namespace Automation.Application;
 public sealed class JobRunner(
     IJobRepository jobs,
     ICheckpointRepository checkpoints,
+    IJobPageCommitter pageCommitter,
     IBrowserCatalogSessionFactory sessions,
     IFailureArtifactWriter failureArtifacts)
 {
@@ -17,8 +18,8 @@ public sealed class JobRunner(
     {
         job.Validate();
 
-        var existing = await jobs.FindAsync(job.JobId, cancellationToken);
-        if (existing?.Status == JobStatus.Completed)
+        var claim = await jobs.TryClaimAsync(job.JobId, cancellationToken);
+        if (claim == JobClaimResult.AlreadyCompleted)
         {
             var completedCheckpoint = await checkpoints.FindAsync(job.JobId, cancellationToken);
             return new JobRunResult(
@@ -27,7 +28,11 @@ public sealed class JobRunner(
                 completedCheckpoint?.LastCompletedPage ?? job.MaxPages);
         }
 
-        await jobs.MarkRunningAsync(job.JobId, cancellationToken);
+        if (claim == JobClaimResult.AlreadyRunning)
+        {
+            throw new JobAlreadyRunningException(job.JobId);
+        }
+
         var checkpoint = await checkpoints.FindAsync(job.JobId, cancellationToken);
         var lastCompletedPage = checkpoint?.LastCompletedPage ?? 0;
 
@@ -40,11 +45,10 @@ public sealed class JobRunner(
                 cancellationToken.ThrowIfCancellationRequested();
                 var items = await session.ExtractPageAsync(page, cancellationToken);
 
-                // Storage adapters must upsert by (jobId, externalId). Save the
-                // checkpoint only after the item write succeeds.
-                await jobs.StoreItemsAsync(job.JobId, items, cancellationToken);
                 lastCompletedPage = page;
-                await checkpoints.SaveAsync(
+                await pageCommitter.CommitPageAsync(
+                    job.JobId,
+                    items,
                     new JobCheckpoint(job.JobId, page, DateTimeOffset.UtcNow),
                     cancellationToken);
             }
@@ -69,4 +73,3 @@ public sealed class JobRunner(
         }
     }
 }
-

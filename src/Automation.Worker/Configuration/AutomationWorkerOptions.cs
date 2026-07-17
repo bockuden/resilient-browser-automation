@@ -46,10 +46,11 @@ public sealed class ConcurrencyOptions
 public sealed class StorageOptions
 {
     public string ConnectionString { get; init; } = "Data Source=artifacts/automation.db";
+
+    public int StaleRunningJobSeconds { get; init; } = 300;
 }
 
 public sealed class ArtifactOptions
 {
     public string RootPath { get; init; } = "artifacts";
 }
-

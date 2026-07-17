@@ -1,5 +1,6 @@
 using Automation.Application;
 using Automation.Application.Abstractions;
+using Automation.Storage;
 using Automation.Worker.Adapters;
 using Automation.Worker.Configuration;
 using Automation.Worker.Jobs;
@@ -32,8 +33,22 @@ try
     builder.Services.AddSingleton(commandLine);
     builder.Services.AddSingleton<JobLineParser>();
     builder.Services.AddSingleton<IJobSource, JsonLinesJobSource>();
-    builder.Services.AddSingleton<IJobRepository, InMemoryJobRepository>();
-    builder.Services.AddSingleton<ICheckpointRepository, InMemoryCheckpointRepository>();
+    builder.Services.AddSingleton(serviceProvider =>
+    {
+        var options = serviceProvider.GetRequiredService<IOptions<AutomationWorkerOptions>>().Value;
+        return new SqliteConnectionFactory(options.Storage.ConnectionString);
+    });
+    builder.Services.AddSingleton<SqliteMigrator>();
+    builder.Services.AddSingleton(serviceProvider =>
+    {
+        var options = serviceProvider.GetRequiredService<IOptions<AutomationWorkerOptions>>().Value;
+        return new SqliteAutomationRepository(
+            serviceProvider.GetRequiredService<SqliteConnectionFactory>(),
+            TimeSpan.FromSeconds(options.Storage.StaleRunningJobSeconds));
+    });
+    builder.Services.AddSingleton<IJobRepository>(serviceProvider => serviceProvider.GetRequiredService<SqliteAutomationRepository>());
+    builder.Services.AddSingleton<ICheckpointRepository>(serviceProvider => serviceProvider.GetRequiredService<SqliteAutomationRepository>());
+    builder.Services.AddSingleton<IJobPageCommitter>(serviceProvider => serviceProvider.GetRequiredService<SqliteAutomationRepository>());
     builder.Services.AddSingleton<IBrowserCatalogSessionFactory, FakeBrowserCatalogSessionFactory>();
     builder.Services.AddSingleton<IFailureArtifactWriter, NoOpFailureArtifactWriter>();
     builder.Services.AddSingleton<JobRunner>();
@@ -41,6 +56,7 @@ try
     builder.Services.AddHostedService(serviceProvider => serviceProvider.GetRequiredService<AutomationWorkerService>());
 
     using var host = builder.Build();
+    await host.Services.GetRequiredService<SqliteMigrator>().MigrateAsync(cancellationSource.Token);
     await host.StartAsync(cancellationSource.Token);
 
     var worker = host.Services.GetRequiredService<AutomationWorkerService>();

@@ -105,6 +105,8 @@ Commit: `feat: add validated job input and generic worker host`.
 
 ### Milestone 2 — SQLite idempotency and checkpoints
 
+Status: complete.
+
 1. Create `jobs`, `checkpoints`, `catalog_items`, and `job_attempts` tables.
 2. Make `jobs.job_id` the primary key and `(job_id, external_id)` unique.
 3. Use explicit transactions: item upsert first, checkpoint update second.

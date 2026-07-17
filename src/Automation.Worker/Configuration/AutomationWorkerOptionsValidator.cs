@@ -44,6 +44,11 @@ public sealed class AutomationWorkerOptionsValidator : IValidateOptions<Automati
             errors.Add("Automation:Storage:ConnectionString is required.");
         }
 
+        if (options.Storage.StaleRunningJobSeconds <= 0)
+        {
+            errors.Add("Automation:Storage:StaleRunningJobSeconds must be greater than zero.");
+        }
+
         if (string.IsNullOrWhiteSpace(options.Artifacts.RootPath))
         {
             errors.Add("Automation:Artifacts:RootPath is required.");
@@ -54,4 +59,3 @@ public sealed class AutomationWorkerOptionsValidator : IValidateOptions<Automati
             : ValidateOptionsResult.Fail(errors);
     }
 }
-
