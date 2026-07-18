@@ -19,9 +19,15 @@ public sealed class AutomationWorkerOptions
 
 public sealed class BrowserOptions
 {
+    public bool Headless { get; init; } = true;
+
     public int NavigationTimeoutSeconds { get; init; } = 30;
 
     public int OperationTimeoutSeconds { get; init; } = 30;
+
+    public string DemoUsername { get; init; } = "demo";
+
+    public string DemoPassword { get; init; } = "automation";
 }
 
 public sealed class RetryOptions

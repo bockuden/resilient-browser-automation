@@ -122,6 +122,8 @@ Commit: `feat: persist idempotent jobs and transactional checkpoints`.
 
 ### Milestone 3 — Playwright catalog extraction
 
+Status: complete.
+
 1. Own one Chromium lifecycle in the worker and isolate each job in a context.
 2. Navigate to `startUrl` and wait for application state, not arbitrary sleeps.
 3. Use role, label, and `data-testid` locators, not styling classes.

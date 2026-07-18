@@ -1,0 +1,1 @@
+{"jobId":"catalog-playwright-dom-change","target":"demo-catalog","startUrl":"http://127.0.0.1:8080/catalog?scenario=dom-change&run_id=playwright-dom-change","maxPages":4}

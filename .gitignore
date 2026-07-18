@@ -12,6 +12,7 @@ artifacts/
 .venv/
 .dotnet/
 .dotnet-cli-home/
+.playwright-browsers/
 .nuget/
 dotnet-install.ps1
 dotnet-10-releases.json

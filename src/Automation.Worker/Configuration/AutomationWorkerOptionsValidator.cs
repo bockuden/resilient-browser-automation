@@ -18,6 +18,11 @@ public sealed class AutomationWorkerOptionsValidator : IValidateOptions<Automati
             errors.Add("Automation:Browser:OperationTimeoutSeconds must be greater than zero.");
         }
 
+        if (string.IsNullOrWhiteSpace(options.Browser.DemoUsername) || string.IsNullOrWhiteSpace(options.Browser.DemoPassword))
+        {
+            errors.Add("Automation:Browser demo credentials are required.");
+        }
+
         if (options.Retry.MaxAttempts is < 1 or > 20)
         {
             errors.Add("Automation:Retry:MaxAttempts must be between 1 and 20.");

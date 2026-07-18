@@ -1,5 +1,6 @@
 using Automation.Application;
 using Automation.Application.Abstractions;
+using Automation.Playwright;
 using Automation.Storage;
 using Automation.Worker.Adapters;
 using Automation.Worker.Configuration;
@@ -49,7 +50,18 @@ try
     builder.Services.AddSingleton<IJobRepository>(serviceProvider => serviceProvider.GetRequiredService<SqliteAutomationRepository>());
     builder.Services.AddSingleton<ICheckpointRepository>(serviceProvider => serviceProvider.GetRequiredService<SqliteAutomationRepository>());
     builder.Services.AddSingleton<IJobPageCommitter>(serviceProvider => serviceProvider.GetRequiredService<SqliteAutomationRepository>());
-    builder.Services.AddSingleton<IBrowserCatalogSessionFactory, FakeBrowserCatalogSessionFactory>();
+    builder.Services.AddSingleton<IBrowserCatalogSessionFactory>(serviceProvider =>
+    {
+        var browser = serviceProvider.GetRequiredService<IOptions<AutomationWorkerOptions>>().Value.Browser;
+        return new PlaywrightCatalogSessionFactory(new PlaywrightBrowserOptions
+        {
+            Headless = browser.Headless,
+            NavigationTimeoutMilliseconds = browser.NavigationTimeoutSeconds * 1000,
+            OperationTimeoutMilliseconds = browser.OperationTimeoutSeconds * 1000,
+            DemoUsername = browser.DemoUsername,
+            DemoPassword = browser.DemoPassword,
+        });
+    });
     builder.Services.AddSingleton<IFailureArtifactWriter, NoOpFailureArtifactWriter>();
     builder.Services.AddSingleton<JobRunner>();
     builder.Services.AddSingleton<AutomationWorkerService>();

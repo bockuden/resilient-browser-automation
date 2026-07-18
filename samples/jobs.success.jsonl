@@ -1,1 +1,1 @@
-{"jobId":"catalog-2026-001","target":"demo-catalog","startUrl":"http://demo-site:8080/catalog?scenario=success&run_id=catalog-2026-001","maxPages":2}
+{"jobId":"catalog-2026-001","target":"demo-catalog","startUrl":"http://localhost:8080/catalog?scenario=success&run_id=catalog-2026-001","maxPages":4}

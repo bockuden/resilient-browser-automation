@@ -31,7 +31,7 @@ The worker will accept a job such as:
 }
 ```
 
-It will launch Chromium through Playwright, traverse the catalog, persist a
+It launches Chromium through Playwright, traverses the catalog, persists a
 checkpoint after each page, resume after interruption, and store each item only
 once. A terminal failure will produce a screenshot, HTML snapshot, trace, and
 machine-readable error metadata.
@@ -136,6 +136,32 @@ failed; `4` means cancellation. The worker reads settings from
 retry, concurrency, storage, and artifact values are validated when it starts.
 `Automation:Storage:StaleRunningJobSeconds` defines when an interrupted
 `Running` job can be claimed again; completed jobs are never reopened.
+
+## Run Playwright extraction (Milestone 3)
+
+Build first, then install the Chromium revision paired with the pinned
+Playwright package. The local browser directory is ignored by Git.
+
+```powershell
+$env:PLAYWRIGHT_BROWSERS_PATH = "$PWD/.playwright-browsers"
+.\src\Automation.Worker\bin\Release\net10.0\playwright.ps1 install chromium
+```
+
+Start the test stand with `docker compose up --build demo-site`, then run a
+sample job from another PowerShell window. The sample expects the published
+host port at `localhost:8080`.
+
+```powershell
+$env:PLAYWRIGHT_BROWSERS_PATH = "$PWD/.playwright-browsers"
+.\eng\dotnet.ps1 run --project .\src\Automation.Worker\Automation.Worker.csproj `
+  --configuration Release -- --jobs .\samples\jobs.success.jsonl
+```
+
+The worker owns one Chromium lifecycle and gives every job its own browser
+context. Catalog extraction uses `data-testid` and role/label locators, so the
+`dom-change` scenario preserves the same result. The `DemoUsername` and
+`DemoPassword` settings are only for the deterministic local stand and are
+never written to logs.
 
 ## Engineering principles
 
