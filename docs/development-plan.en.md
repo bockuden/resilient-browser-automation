@@ -140,6 +140,8 @@ Commit: `feat: extract paginated catalogs with Playwright`.
 
 ### Milestone 4 — classified retries and finite timeout budgets
 
+Status: complete.
+
 1. Classify 408, 429, 502, 503, 504, selected navigation timeouts, and browser disconnect as transient.
 2. Classify validation, authentication, unsupported DOM contract, and exhausted retries as permanent.
 3. Implement exponential delay with bounded jitter and injectable time/random providers.

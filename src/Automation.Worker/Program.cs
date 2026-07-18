@@ -1,5 +1,6 @@
 using Automation.Application;
 using Automation.Application.Abstractions;
+using Automation.Application.Retry;
 using Automation.Playwright;
 using Automation.Storage;
 using Automation.Worker.Adapters;
@@ -50,6 +51,28 @@ try
     builder.Services.AddSingleton<IJobRepository>(serviceProvider => serviceProvider.GetRequiredService<SqliteAutomationRepository>());
     builder.Services.AddSingleton<ICheckpointRepository>(serviceProvider => serviceProvider.GetRequiredService<SqliteAutomationRepository>());
     builder.Services.AddSingleton<IJobPageCommitter>(serviceProvider => serviceProvider.GetRequiredService<SqliteAutomationRepository>());
+    builder.Services.AddSingleton<IJobClock, SystemJobClock>();
+    builder.Services.AddSingleton<IRetryRandom, SystemRetryRandom>();
+    builder.Services.AddSingleton<IRetryObserver, LoggingRetryObserver>();
+    builder.Services.AddSingleton<TransientFailureClassifier>();
+    builder.Services.AddSingleton(serviceProvider =>
+    {
+        var retry = serviceProvider.GetRequiredService<IOptions<AutomationWorkerOptions>>().Value.Retry;
+        return new RetryExecutor(
+            new RetrySettings(
+                retry.MaxAttempts,
+                TimeSpan.FromMilliseconds(retry.BaseDelayMilliseconds),
+                TimeSpan.FromMilliseconds(retry.MaxDelayMilliseconds)),
+            serviceProvider.GetRequiredService<TransientFailureClassifier>(),
+            serviceProvider.GetRequiredService<IJobClock>(),
+            serviceProvider.GetRequiredService<IRetryRandom>(),
+            serviceProvider.GetRequiredService<IRetryObserver>());
+    });
+    builder.Services.AddSingleton(serviceProvider =>
+    {
+        var timeout = serviceProvider.GetRequiredService<IOptions<AutomationWorkerOptions>>().Value.Timeouts;
+        return new JobExecutionSettings(TimeSpan.FromSeconds(timeout.WholeJobTimeoutSeconds));
+    });
     builder.Services.AddSingleton<IBrowserCatalogSessionFactory>(serviceProvider =>
     {
         var browser = serviceProvider.GetRequiredService<IOptions<AutomationWorkerOptions>>().Value.Browser;

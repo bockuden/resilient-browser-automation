@@ -1,0 +1,1 @@
+{"jobId":"catalog-playwright-transient","target":"demo-catalog","startUrl":"http://localhost:8080/catalog?scenario=transient&run_id=playwright-transient&fail_for=2","maxPages":4}

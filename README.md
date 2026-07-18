@@ -163,6 +163,15 @@ context. Catalog extraction uses `data-testid` and role/label locators, so the
 `DemoPassword` settings are only for the deterministic local stand and are
 never written to logs.
 
+## Retry and timeout behavior (Milestone 4)
+
+For HTTP `408`, `429`, `502`, `503`, `504`, selected browser timeouts, and
+browser disconnects, the worker retries the current page with bounded
+exponential backoff and jitter. `Retry-After` is preferred when it fits the
+remaining whole-job budget. A permanent HTTP 500 or an invalid DOM contract is
+not retried. Retry logs include the reason, next attempt, delay, and remaining
+budget; cancellation interrupts backoff immediately.
+
 ## Engineering principles
 
 - At-least-once job delivery with exactly-once observable results per `jobId`.

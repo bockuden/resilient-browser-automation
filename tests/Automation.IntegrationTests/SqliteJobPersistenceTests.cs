@@ -3,6 +3,7 @@ using Automation.Application.Abstractions;
 using Automation.Core.Checkpoints;
 using Automation.Core.Jobs;
 using Automation.Core.Results;
+using Automation.Application.Retry;
 using Automation.Storage;
 
 namespace Automation.IntegrationTests;
@@ -92,8 +93,46 @@ public sealed class SqliteJobPersistenceTests
         });
     }
 
-    private static JobRunner CreateRunner(SqliteAutomationRepository repository, RecordingSessionFactory factory) =>
-        new(repository, repository, repository, factory, new NoOpFailureArtifactWriter());
+    [Test]
+    public async Task TransientPageFailure_RetriesOnlyThatPageAndThenContinues()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        var firstPageAttempts = 0;
+        var factory = new RecordingSessionFactory(page =>
+        {
+            if (page == 1 && ++firstPageAttempts < 3)
+            {
+                throw new BrowserOperationException("HTTP 503", 503);
+            }
+
+            return [Item($"item-{page}")];
+        });
+
+        var result = await CreateRunner(database.Repository, factory, maxAttempts: 3)
+            .RunAsync(Job("retry-page-job", maxPages: 2), CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.LastCompletedPage, Is.EqualTo(2));
+            Assert.That(firstPageAttempts, Is.EqualTo(3));
+            Assert.That(factory.OpenCount, Is.EqualTo(3));
+        });
+    }
+
+    private static JobRunner CreateRunner(SqliteAutomationRepository repository, RecordingSessionFactory factory, int maxAttempts = 1) =>
+        new(
+            repository,
+            repository,
+            repository,
+            factory,
+            new NoOpFailureArtifactWriter(),
+            new RetryExecutor(
+                new RetrySettings(maxAttempts, TimeSpan.Zero, TimeSpan.Zero),
+                new TransientFailureClassifier(),
+                new TestClock(),
+                new FixedRetryRandom(),
+                new NoOpRetryObserver()),
+            new JobExecutionSettings(TimeSpan.FromMinutes(1)));
 
     private static AutomationJob Job(string jobId, int maxPages) =>
         new(jobId, "test", new Uri("https://example.test/catalog"), maxPages);
@@ -123,6 +162,18 @@ public sealed class SqliteJobPersistenceTests
     private sealed class NoOpFailureArtifactWriter : IFailureArtifactWriter
     {
         public Task CaptureAsync(string jobId, Exception error, CancellationToken cancellationToken) => Task.CompletedTask;
+    }
+
+    private sealed class TestClock : IJobClock
+    {
+        public DateTimeOffset UtcNow => DateTimeOffset.UtcNow;
+
+        public Task DelayAsync(TimeSpan delay, CancellationToken cancellationToken) => Task.CompletedTask;
+    }
+
+    private sealed class FixedRetryRandom : IRetryRandom
+    {
+        public double NextDouble() => 0.5;
     }
 
     private sealed class TestDatabase : IAsyncDisposable

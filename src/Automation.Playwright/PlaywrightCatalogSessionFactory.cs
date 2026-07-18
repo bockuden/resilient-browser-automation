@@ -1,5 +1,7 @@
 using System.Globalization;
+using System.Text.RegularExpressions;
 using Automation.Application.Abstractions;
+using Automation.Application;
 using Automation.Core.Jobs;
 using Automation.Core.Results;
 using Microsoft.Playwright;
@@ -159,7 +161,16 @@ internal sealed class PlaywrightCatalogSession(IBrowserContext context, IPage pa
         var status = await page.GetByRole(AriaRole.Status).InnerTextAsync();
         if (status.StartsWith("Catalog error:", StringComparison.Ordinal))
         {
-            throw new InvalidOperationException(status);
+            var statusMatch = Regex.Match(status, "HTTP\\s+(\\d{3})");
+            int? statusCode = int.TryParse(statusMatch.Groups[1].Value, out var statusValue) ? statusValue : null;
+            var retryAfterMatch = Regex.Match(status, "retry-after=([0-9]+(?:\\.[0-9]+)?)", RegexOptions.IgnoreCase);
+            TimeSpan? retryAfter = double.TryParse(
+                retryAfterMatch.Groups[1].Value,
+                CultureInfo.InvariantCulture,
+                out var retryAfterSeconds)
+                ? TimeSpan.FromSeconds(retryAfterSeconds)
+                : null;
+            throw new BrowserOperationException(status, statusCode, retryAfter);
         }
     }
 
@@ -179,8 +190,8 @@ internal sealed class PlaywrightCatalogSession(IBrowserContext context, IPage pa
             }
 
             await next.ClickAsync();
+            await WaitForCatalogPageAsync(page, loadedPage + 1);
             loadedPage++;
-            await WaitForCatalogPageAsync(page, loadedPage);
         }
 
         return true;
