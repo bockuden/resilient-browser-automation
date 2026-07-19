@@ -47,6 +47,16 @@ public sealed class TimeoutOptions
 public sealed class ConcurrencyOptions
 {
     public int MaxConcurrentJobs { get; init; } = 1;
+
+    public int QueueCapacity { get; init; } = 32;
+
+    public int PerTargetRateLimit { get; init; } = 1;
+
+    public int PerTargetRatePeriodMilliseconds { get; init; } = 1000;
+
+    public int PerTargetBurstSize { get; init; } = 1;
+
+    public int ShutdownGracePeriodSeconds { get; init; } = 30;
 }
 
 public sealed class StorageOptions

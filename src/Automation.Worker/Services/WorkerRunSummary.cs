@@ -2,13 +2,18 @@ namespace Automation.Worker.Services;
 
 public sealed class WorkerRunSummary
 {
-    public int CompletedJobs { get; private set; }
+    private int completedJobs;
+    private int rejectedJobs;
+    private int failedJobs;
+    private int cancelledJobs;
 
-    public int RejectedJobs { get; private set; }
+    public int CompletedJobs => Volatile.Read(ref completedJobs);
 
-    public int FailedJobs { get; private set; }
+    public int RejectedJobs => Volatile.Read(ref rejectedJobs);
 
-    public int CancelledJobs { get; private set; }
+    public int FailedJobs => Volatile.Read(ref failedJobs);
+
+    public int CancelledJobs => Volatile.Read(ref cancelledJobs);
 
     public WorkerExitCode ExitCode => FailedJobs > 0
         ? WorkerExitCode.Failed
@@ -18,12 +23,11 @@ public sealed class WorkerRunSummary
                 ? WorkerExitCode.RejectedInput
                 : WorkerExitCode.Success;
 
-    public void MarkCompleted() => CompletedJobs++;
+    public void MarkCompleted() => Interlocked.Increment(ref completedJobs);
 
-    public void MarkRejected() => RejectedJobs++;
+    public void MarkRejected() => Interlocked.Increment(ref rejectedJobs);
 
-    public void MarkFailed() => FailedJobs++;
+    public void MarkFailed() => Interlocked.Increment(ref failedJobs);
 
-    public void MarkCancelled() => CancelledJobs++;
+    public void MarkCancelled() => Interlocked.Increment(ref cancelledJobs);
 }
-

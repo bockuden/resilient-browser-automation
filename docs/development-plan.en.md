@@ -175,6 +175,8 @@ Commit: `feat: capture redacted failure evidence and telemetry`.
 
 ### Milestone 6 — bounded concurrency and rate limiting
 
+Status: complete.
+
 1. Read jobs through a bounded `Channel<T>`.
 2. Limit active contexts with `SemaphoreSlim` or a concurrency limiter.
 3. Apply a per-target token-bucket rate limiter.

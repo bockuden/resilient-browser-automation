@@ -186,6 +186,18 @@ JSON logs use stable event IDs: `1000` input rejection, `1001` completion,
 artifact bundle created. The process exposes .NET `Meter` instruments named
 `automation.jobs.*`, `automation.pages.completed`, and `automation.retries`.
 
+## Concurrency and target rate limiting (Milestone 6)
+
+Worker intake uses a bounded channel configured by
+`Automation:Concurrency:QueueCapacity`. `MaxConcurrentJobs` controls how many
+jobs may execute at the same time, and each job keeps its own log scope with
+`jobId`, `target`, `executionAttempt`, and `workerId`.
+
+Before a job starts, the worker applies a per-target token bucket using
+`PerTargetRateLimit`, `PerTargetRatePeriodMilliseconds`, and
+`PerTargetBurstSize`. On shutdown, intake stops immediately; active jobs are
+given `ShutdownGracePeriodSeconds` before the remaining work is cancelled.
+
 ## Engineering principles
 
 - At-least-once job delivery with exactly-once observable results per `jobId`.

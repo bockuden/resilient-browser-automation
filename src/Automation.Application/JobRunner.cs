@@ -13,7 +13,7 @@ public sealed class JobRunner(
     IBrowserCatalogSessionFactory sessions,
     IFailureArtifactWriter failureArtifacts,
     RetryExecutor retries,
-    JobExecutionSettings executionSettings)
+    JobExecutionSettings executionSettings) : IJobRunner
 {
     public async Task<JobRunResult> RunAsync(
         AutomationJob job,

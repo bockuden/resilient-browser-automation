@@ -44,6 +44,28 @@ public sealed class AutomationWorkerOptionsValidator : IValidateOptions<Automati
             errors.Add("Automation:Concurrency:MaxConcurrentJobs must be greater than zero.");
         }
 
+        if (options.Concurrency.QueueCapacity <= 0)
+        {
+            errors.Add("Automation:Concurrency:QueueCapacity must be greater than zero.");
+        }
+
+        if (options.Concurrency.PerTargetRateLimit <= 0 ||
+            options.Concurrency.PerTargetRatePeriodMilliseconds <= 0 ||
+            options.Concurrency.PerTargetBurstSize <= 0)
+        {
+            errors.Add("Automation per-target rate limit values must be greater than zero.");
+        }
+
+        if (options.Concurrency.PerTargetBurstSize < options.Concurrency.PerTargetRateLimit)
+        {
+            errors.Add("Automation:Concurrency:PerTargetBurstSize must not be less than PerTargetRateLimit.");
+        }
+
+        if (options.Concurrency.ShutdownGracePeriodSeconds <= 0)
+        {
+            errors.Add("Automation:Concurrency:ShutdownGracePeriodSeconds must be greater than zero.");
+        }
+
         if (string.IsNullOrWhiteSpace(options.Storage.ConnectionString))
         {
             errors.Add("Automation:Storage:ConnectionString is required.");

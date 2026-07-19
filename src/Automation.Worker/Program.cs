@@ -90,7 +90,9 @@ try
         new FileFailureArtifactWriter(
             serviceProvider.GetRequiredService<IOptions<AutomationWorkerOptions>>().Value.Artifacts,
             serviceProvider.GetRequiredService<ILogger<FileFailureArtifactWriter>>()));
+    builder.Services.AddSingleton<ITargetRateLimiter, TargetRateLimiter>();
     builder.Services.AddSingleton<JobRunner>();
+    builder.Services.AddSingleton<IJobRunner>(serviceProvider => serviceProvider.GetRequiredService<JobRunner>());
     builder.Services.AddSingleton<AutomationWorkerService>();
     builder.Services.AddHostedService(serviceProvider => serviceProvider.GetRequiredService<AutomationWorkerService>());
 
