@@ -1,0 +1,1 @@
+{"jobId":"catalog-playwright-cancel","target":"demo-catalog","startUrl":"http://127.0.0.1:8080/catalog?scenario=slow&run_id=playwright-cancel&delay_ms=30000","maxPages":4}

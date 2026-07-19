@@ -10,6 +10,7 @@
 | Permanent HTTP 500 | Terminal browser failure | Mark failed | `error.json`, `page.html`, `screenshot.png`, `trace.zip` |
 | Missing stable locator | Terminal contract drift | Mark failed | DOM snapshot and screenshot |
 | Duplicate catalog item IDs | Expected data condition | Upsert by `(jobId, externalId)` | SQLite row count remains stable |
+| `maxPages` exceeds the real catalog | Expected natural end | Stop after the last page with no Next button | Final checkpoint stays on the real page |
 | Process interruption after checkpoint | Recoverable | Resume after last durable page | Checkpoint row |
 | Cancellation | Terminal non-success | Mark cancelled | Structured event `1002` |
 | Artifact capture failure | Diagnostics failure | Preserve original exception | Error log for original failure |

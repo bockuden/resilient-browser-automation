@@ -34,8 +34,8 @@ flowchart LR
 3. A valid job is claimed in SQLite by `jobId`.
 4. A completed job returns idempotently without opening Chromium.
 5. The runner starts from the last durable checkpoint.
-6. Playwright extracts one page at a time with stable locators.
-7. Items are upserted before the checkpoint is advanced.
+6. Playwright extracts ID, name, price, page number, and source URL with stable locators.
+7. Items are upserted before the checkpoint is advanced; missing Next ends the job.
 8. Classified transient failures retry the current page within the job budget.
 9. Terminal browser failures write redacted evidence.
 10. Final state is persisted as `Completed`, `Failed`, or `Cancelled`.

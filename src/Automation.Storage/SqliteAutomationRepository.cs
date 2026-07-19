@@ -103,15 +103,17 @@ public sealed class SqliteAutomationRepository(
             using var insert = connection.CreateCommand();
             insert.Transaction = transaction;
             insert.CommandText = """
-                INSERT INTO catalog_items (job_id, external_id, name, price, source_url)
-                VALUES ($jobId, $externalId, $name, $price, $sourceUrl)
+                INSERT INTO catalog_items (job_id, external_id, name, price, page_number, source_url)
+                VALUES ($jobId, $externalId, $name, $price, $pageNumber, $sourceUrl)
                 ON CONFLICT(job_id, external_id) DO UPDATE SET
-                    name = excluded.name, price = excluded.price, source_url = excluded.source_url;
+                    name = excluded.name, price = excluded.price,
+                    page_number = excluded.page_number, source_url = excluded.source_url;
                 """;
             insert.Parameters.AddWithValue("$jobId", jobId);
             insert.Parameters.AddWithValue("$externalId", item.ExternalId);
             insert.Parameters.AddWithValue("$name", item.Name);
             insert.Parameters.AddWithValue("$price", item.Price.ToString(CultureInfo.InvariantCulture));
+            insert.Parameters.AddWithValue("$pageNumber", item.PageNumber);
             insert.Parameters.AddWithValue("$sourceUrl", item.SourceUrl.AbsoluteUri);
             await insert.ExecuteNonQueryAsync(cancellationToken);
         }

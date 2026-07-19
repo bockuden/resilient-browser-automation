@@ -119,6 +119,47 @@ public sealed class SqliteJobPersistenceTests
         });
     }
 
+    [Test]
+    public async Task NaturalCatalogEnd_StopsBeforeConfiguredMaximum()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        var factory = new RecordingSessionFactory(
+            page => [Item($"item-{page}", page)],
+            lastPage: 4);
+
+        var result = await CreateRunner(database.Repository, factory)
+            .RunAsync(Job("natural-end-job", maxPages: 10), CancellationToken.None);
+        var checkpoint = await ((ICheckpointRepository)database.Repository)
+            .FindAsync("natural-end-job", CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.LastCompletedPage, Is.EqualTo(4));
+            Assert.That(checkpoint!.LastCompletedPage, Is.EqualTo(4));
+        });
+    }
+
+    [Test]
+    public async Task CommitPage_PersistsItemPageNumber()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        const string jobId = "page-number-job";
+        await database.Repository.TryClaimAsync(jobId, CancellationToken.None);
+        await database.Repository.CommitPageAsync(
+            jobId,
+            [Item("item-page-3", pageNumber: 3)],
+            new JobCheckpoint(jobId, 3, DateTimeOffset.UtcNow),
+            CancellationToken.None);
+
+        using var connection = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={database.Path};Pooling=False");
+        await connection.OpenAsync();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT page_number FROM catalog_items WHERE job_id = $jobId;";
+        command.Parameters.AddWithValue("$jobId", jobId);
+
+        Assert.That(await command.ExecuteScalarAsync(), Is.EqualTo(3L));
+    }
+
     private static JobRunner CreateRunner(SqliteAutomationRepository repository, RecordingSessionFactory factory, int maxAttempts = 1) =>
         new(
             repository,
@@ -137,24 +178,31 @@ public sealed class SqliteJobPersistenceTests
     private static AutomationJob Job(string jobId, int maxPages) =>
         new(jobId, "test", new Uri("https://example.test/catalog"), maxPages);
 
-    private static CatalogItem Item(string externalId) =>
-        new(externalId, externalId, 10m, new Uri("https://example.test/catalog"));
+    private static CatalogItem Item(string externalId, int pageNumber = 1) =>
+        new(externalId, externalId, 10m, pageNumber, new Uri("https://example.test/catalog"));
 
-    private sealed class RecordingSessionFactory(Func<int, IReadOnlyCollection<CatalogItem>> extract) : IBrowserCatalogSessionFactory
+    private sealed class RecordingSessionFactory(
+        Func<int, IReadOnlyCollection<CatalogItem>> extract,
+        int lastPage = int.MaxValue) : IBrowserCatalogSessionFactory
     {
         public int OpenCount { get; private set; }
 
         public Task<IBrowserCatalogSession> OpenAsync(AutomationJob job, CancellationToken cancellationToken)
         {
             OpenCount++;
-            return Task.FromResult<IBrowserCatalogSession>(new RecordingSession(extract));
+            return Task.FromResult<IBrowserCatalogSession>(new RecordingSession(extract, lastPage));
         }
     }
 
-    private sealed class RecordingSession(Func<int, IReadOnlyCollection<CatalogItem>> extract) : IBrowserCatalogSession
+    private sealed class RecordingSession(
+        Func<int, IReadOnlyCollection<CatalogItem>> extract,
+        int lastPage) : IBrowserCatalogSession
     {
-        public Task<IReadOnlyCollection<CatalogItem>> ExtractPageAsync(int pageNumber, CancellationToken cancellationToken) =>
-            Task.FromResult(extract(pageNumber));
+        public Task<CatalogPageExtraction?> ExtractPageAsync(int pageNumber, CancellationToken cancellationToken) =>
+            Task.FromResult(
+                pageNumber > lastPage
+                    ? null
+                    : new CatalogPageExtraction(extract(pageNumber), pageNumber < lastPage));
 
         public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }

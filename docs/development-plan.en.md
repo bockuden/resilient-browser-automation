@@ -223,6 +223,26 @@ ten minutes; limitations avoid anti-bot or production-scale claims.
 
 Commit: `docs: publish reproducible v1 automation evidence`.
 
+### Milestone 9 — release-hardening audit
+
+Status: complete.
+
+1. Stop at the real last catalog page even when `maxPages` is higher.
+2. Persist each item's source page number through SQLite schema migration 2.
+3. Accept a UTF-8 BOM on the first JSON Lines standard-input record.
+4. Add idempotently skipped-job and job-duration instruments.
+5. Make cancellation interrupt active Playwright waits.
+6. Demonstrate real browser checkpoint resume and graceful cancellation in Compose and CI.
+7. Rename the FastAPI import package to `resilient_automation_test_stand`.
+8. Preserve the complete protected-catalog return URL through demo login.
+
+Acceptance: `maxPages=10` stops and checkpoints at page 4; page numbers are
+stored with catalog rows; Compose shows a failure after page 2 followed by a
+resume at page 3; the slow browser job exits with cancellation code `4`; FastAPI
+tests import and package the renamed module.
+
+Commit: `fix: harden release pagination recovery and cancellation`.
+
 ## 5. Required test matrix
 
 | Test | Layer | Main proof |
@@ -237,6 +257,9 @@ Commit: `docs: publish reproducible v1 automation evidence`.
 | `RejectsInvalidJobConfiguration` | Unit | Invalid work never opens a browser |
 | `DoesNotCheckpointBeforeItemCommit` | Integration | Transaction ordering prevents loss |
 | `RedactsSecretsFromArtifacts` | Integration | Diagnostics do not leak credentials |
+| `NaturalCatalogEndStopsAtLastPage` | Integration/E2E | A high maximum does not advance a false checkpoint |
+| `PersistsCatalogItemPageNumber` | Integration/E2E | Every stored item keeps its source page |
+| `AcceptsUtf8BomFromStandardInput` | Unit | Windows pipeline input remains valid JSON Lines |
 
 ## 6. Failure matrix
 

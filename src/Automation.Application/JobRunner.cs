@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Automation.Application.Abstractions;
 using Automation.Application.Retry;
 using Automation.Core.Checkpoints;
@@ -20,11 +21,27 @@ public sealed class JobRunner(
         CancellationToken cancellationToken)
     {
         job.Validate();
+        var startedAt = Stopwatch.GetTimestamp();
+        try
+        {
+            return await RunCoreAsync(job, cancellationToken);
+        }
+        finally
+        {
+            AutomationMetrics.JobDuration.Record(
+                Stopwatch.GetElapsedTime(startedAt).TotalMilliseconds);
+        }
+    }
 
+    private async Task<JobRunResult> RunCoreAsync(
+        AutomationJob job,
+        CancellationToken cancellationToken)
+    {
         var claim = await jobs.TryClaimAsync(job.JobId, cancellationToken);
         if (claim == JobClaimResult.AlreadyCompleted)
         {
             var completedCheckpoint = await checkpoints.FindAsync(job.JobId, cancellationToken);
+            AutomationMetrics.JobsSkipped.Add(1);
             return new JobRunResult(
                 job.JobId,
                 WasAlreadyCompleted: true,
@@ -48,7 +65,7 @@ public sealed class JobRunner(
             for (var page = lastCompletedPage + 1; page <= job.MaxPages; page++)
             {
                 var pageNumber = page;
-                var items = await retries.ExecuteAsync(
+                var extraction = await retries.ExecuteAsync(
                     async (attempt, retryCancellationToken) =>
                     {
                         if (attempt > 1 || session is null)
@@ -66,13 +83,23 @@ public sealed class JobRunner(
                     deadline,
                     wholeJobCancellation.Token);
 
+                if (extraction is null)
+                {
+                    break;
+                }
+
                 await pageCommitter.CommitPageAsync(
                     job.JobId,
-                    items,
+                    extraction.Items,
                     new JobCheckpoint(job.JobId, pageNumber, DateTimeOffset.UtcNow),
                     wholeJobCancellation.Token);
                 lastCompletedPage = pageNumber;
                 AutomationMetrics.PagesCompleted.Add(1);
+
+                if (!extraction.HasNextPage)
+                {
+                    break;
+                }
             }
 
             await jobs.MarkCompletedAsync(job.JobId, cancellationToken);

@@ -5,7 +5,7 @@ namespace Automation.Application.Abstractions;
 
 public interface IBrowserCatalogSession : IAsyncDisposable
 {
-    Task<IReadOnlyCollection<CatalogItem>> ExtractPageAsync(
+    Task<CatalogPageExtraction?> ExtractPageAsync(
         int pageNumber,
         CancellationToken cancellationToken);
 }
@@ -16,4 +16,3 @@ public interface IBrowserCatalogSessionFactory
         AutomationJob job,
         CancellationToken cancellationToken);
 }
-

@@ -37,5 +37,15 @@ public sealed class JobLineParserTests
             Assert.That(result.Error, Is.Not.Empty);
         });
     }
-}
 
+    [Test]
+    public void Parse_Utf8BomAtStart_AcceptsFirstStandardInputRecord()
+    {
+        const string json = "\uFEFF" + """{"jobId":"bom-job","target":"demo-catalog","startUrl":"http://demo-site:8080/catalog","maxPages":1}""";
+
+        var result = parser.Parse(json, lineNumber: 1);
+
+        Assert.That(result.IsValid, Is.True);
+        Assert.That(result.Job!.JobId, Is.EqualTo("bom-job"));
+    }
+}

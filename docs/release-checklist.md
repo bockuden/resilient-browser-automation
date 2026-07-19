@@ -12,6 +12,9 @@ Use this checklist before tagging `v1.0.0`.
 - Browser E2E installs only Chromium and required Linux dependencies.
 - The Compose demo runs from `.\eng\demo-compose.ps1`.
 - Repeating the same `jobId` does not duplicate catalog rows.
+- `maxPages` above the catalog size leaves the checkpoint on the real last page.
+- Catalog rows contain their source page number.
+- Real browser E2E proves checkpoint resume and graceful cancellation.
 - Transient and permanent failures are visibly different in logs.
 - Permanent failure writes `error.json`, `page.html`, `screenshot.png`, and
   `trace.zip`.

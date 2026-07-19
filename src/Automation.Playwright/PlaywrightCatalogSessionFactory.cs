@@ -19,14 +19,15 @@ public sealed class PlaywrightCatalogSessionFactory(
     public async Task<IBrowserCatalogSession> OpenAsync(AutomationJob job, CancellationToken cancellationToken)
     {
         var activeBrowser = await GetBrowserAsync(cancellationToken);
-        var context = await activeBrowser.NewContextAsync();
+        var context = await activeBrowser.NewContextAsync().WaitAsync(cancellationToken);
         await context.Tracing.StartAsync(new TracingStartOptions
         {
             Screenshots = true,
             Snapshots = true,
             Sources = true,
-        });
-        var page = await context.NewPageAsync();
+        })
+            .WaitAsync(cancellationToken);
+        var page = await context.NewPageAsync().WaitAsync(cancellationToken);
         page.SetDefaultTimeout(options.OperationTimeoutMilliseconds);
         page.SetDefaultNavigationTimeout(options.NavigationTimeoutMilliseconds);
 
@@ -36,8 +37,9 @@ public sealed class PlaywrightCatalogSessionFactory(
             {
                 WaitUntil = WaitUntilState.DOMContentLoaded,
                 Timeout = options.NavigationTimeoutMilliseconds,
-            });
-            await AuthenticateDemoSiteIfRequiredAsync(page);
+            })
+                .WaitAsync(cancellationToken);
+            await AuthenticateDemoSiteIfRequiredAsync(page, cancellationToken);
             return new PlaywrightCatalogSession(context, page);
         }
         catch
@@ -78,11 +80,12 @@ public sealed class PlaywrightCatalogSessionFactory(
                 return browser;
             }
 
-            playwright = await Microsoft.Playwright.Playwright.CreateAsync();
+            playwright = await Microsoft.Playwright.Playwright.CreateAsync().WaitAsync(cancellationToken);
             browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
             {
                 Headless = options.Headless,
-            });
+            })
+                .WaitAsync(cancellationToken);
             return browser;
         }
         finally
@@ -91,16 +94,18 @@ public sealed class PlaywrightCatalogSessionFactory(
         }
     }
 
-    private async Task AuthenticateDemoSiteIfRequiredAsync(IPage page)
+    private async Task AuthenticateDemoSiteIfRequiredAsync(IPage page, CancellationToken cancellationToken)
     {
         if (!string.Equals(new Uri(page.Url).AbsolutePath, "/login", StringComparison.Ordinal))
         {
             return;
         }
 
-        await page.GetByLabel("Username").FillAsync(options.DemoUsername);
-        await page.GetByLabel("Password").FillAsync(options.DemoPassword);
-        await page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Sign in" }).ClickAsync();
+        await page.GetByLabel("Username").FillAsync(options.DemoUsername).WaitAsync(cancellationToken);
+        await page.GetByLabel("Password").FillAsync(options.DemoPassword).WaitAsync(cancellationToken);
+        await page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Sign in" })
+            .ClickAsync()
+            .WaitAsync(cancellationToken);
     }
 }
 
@@ -122,38 +127,39 @@ internal sealed class PlaywrightCatalogSession(IBrowserContext context, IPage pa
     private int loadedPage = 1;
     private bool initialPageReady;
 
-    public async Task<IReadOnlyCollection<CatalogItem>> ExtractPageAsync(int pageNumber, CancellationToken cancellationToken)
+    public async Task<CatalogPageExtraction?> ExtractPageAsync(int pageNumber, CancellationToken cancellationToken)
     {
         if (!initialPageReady)
         {
-            await WaitForCatalogPageAsync(page, 1);
+            await WaitForCatalogPageAsync(page, 1, cancellationToken);
             initialPageReady = true;
         }
 
-        if (!await MoveToPageAsync(pageNumber))
+        if (!await MoveToPageAsync(pageNumber, cancellationToken))
         {
-            return [];
+            return null;
         }
 
         var cards = page.GetByTestId("catalog-item");
-        var count = await cards.CountAsync();
+        var count = await cards.CountAsync().WaitAsync(cancellationToken);
         var items = new List<CatalogItem>(count);
         for (var index = 0; index < count; index++)
         {
             var card = cards.Nth(index);
-            var externalId = await card.GetAttributeAsync("data-item-id")
+            var externalId = await card.GetAttributeAsync("data-item-id").WaitAsync(cancellationToken)
                 ?? throw new InvalidOperationException("Catalog item is missing data-item-id.");
-            var name = await card.GetByTestId("item-name").InnerTextAsync();
-            var priceText = await card.GetByTestId("item-price").InnerTextAsync();
+            var name = await card.GetByTestId("item-name").InnerTextAsync().WaitAsync(cancellationToken);
+            var priceText = await card.GetByTestId("item-price").InnerTextAsync().WaitAsync(cancellationToken);
             if (!decimal.TryParse(priceText, NumberStyles.Number, CultureInfo.InvariantCulture, out var price))
             {
                 throw new InvalidOperationException($"Catalog item '{externalId}' has an invalid price.");
             }
 
-            items.Add(new CatalogItem(externalId, name, price, new Uri(page.Url)));
+            items.Add(new CatalogItem(externalId, name, price, pageNumber, new Uri(page.Url)));
         }
 
-        return items;
+        var hasNextPage = await page.GetByTestId("next-page").CountAsync().WaitAsync(cancellationToken) > 0;
+        return new CatalogPageExtraction(items, hasNextPage);
     }
 
     public ValueTask DisposeAsync() => context.DisposeAsync();
@@ -195,7 +201,10 @@ internal sealed class PlaywrightCatalogSession(IBrowserContext context, IPage pa
         }
     }
 
-    internal static async Task WaitForCatalogPageAsync(IPage page, int expectedPage)
+    internal static async Task WaitForCatalogPageAsync(
+        IPage page,
+        int expectedPage,
+        CancellationToken cancellationToken)
     {
         await page.WaitForFunctionAsync(
             """
@@ -205,9 +214,10 @@ internal sealed class PlaywrightCatalogSession(IBrowserContext context, IPage pa
                 status?.dataset.testid === 'catalog-error';
             }
             """,
-            expectedPage);
+            expectedPage)
+            .WaitAsync(cancellationToken);
 
-        var status = await page.GetByRole(AriaRole.Status).InnerTextAsync();
+        var status = await page.GetByRole(AriaRole.Status).InnerTextAsync().WaitAsync(cancellationToken);
         if (status.StartsWith("Catalog error:", StringComparison.Ordinal))
         {
             var statusMatch = Regex.Match(status, "HTTP\\s+(\\d{3})");
@@ -223,7 +233,7 @@ internal sealed class PlaywrightCatalogSession(IBrowserContext context, IPage pa
         }
     }
 
-    private async Task<bool> MoveToPageAsync(int requestedPage)
+    private async Task<bool> MoveToPageAsync(int requestedPage, CancellationToken cancellationToken)
     {
         if (requestedPage < loadedPage)
         {
@@ -233,13 +243,13 @@ internal sealed class PlaywrightCatalogSession(IBrowserContext context, IPage pa
         while (loadedPage < requestedPage)
         {
             var next = page.GetByTestId("next-page");
-            if (await next.CountAsync() == 0)
+            if (await next.CountAsync().WaitAsync(cancellationToken) == 0)
             {
                 return false;
             }
 
-            await next.ClickAsync();
-            await WaitForCatalogPageAsync(page, loadedPage + 1);
+            await next.ClickAsync().WaitAsync(cancellationToken);
+            await WaitForCatalogPageAsync(page, loadedPage + 1, cancellationToken);
             loadedPage++;
         }
 

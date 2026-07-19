@@ -12,6 +12,8 @@ public sealed class JobLineParser
 
     public JobInputResult Parse(string line, int lineNumber)
     {
+        line = line.TrimStart('\uFEFF');
+
         if (string.IsNullOrWhiteSpace(line))
         {
             return JobInputResult.Invalid(lineNumber, "A JSON Lines record must not be blank.");
@@ -46,4 +48,3 @@ public sealed class JobLineParser
 
     private sealed record JobInput(string? JobId, string? Target, string? StartUrl, int MaxPages);
 }
-

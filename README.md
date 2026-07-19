@@ -33,7 +33,7 @@ The worker will accept a job such as:
 ```
 
 It launches Chromium through Playwright, traverses the catalog, persists a
-checkpoint after each page, resume after interruption, and store each item only
+checkpoint after each page, resumes after interruption, and stores each item only
 once. A terminal failure will produce a screenshot, HTML snapshot, trace, and
 machine-readable error metadata.
 
@@ -72,6 +72,7 @@ Useful deterministic scenarios:
 | `scenario=transient&fail_for=2` | First two API requests per page return 503 |
 | `scenario=permanent` | Every catalog API request returns 500 |
 | `scenario=slow&delay_ms=3000` | Delayed API response |
+| `scenario=resume&fail_page=3` | Pages 1-2 succeed and page 3 fails for checkpoint recovery |
 | `scenario=dom-change` | Alternative DOM nesting and CSS classes |
 | `scenario=duplicates` | Repeated item IDs across page boundaries |
 
@@ -119,7 +120,7 @@ The FastAPI stand also has its own installable package boundary and CLI. See the
 [`test-stand` README](test-stand/README.md) and
 [ADR 0002](docs/adr/0002-package-ready-test-stand.md).
 
-## CI and release proof (Milestone 8)
+## CI and release proof (Milestones 8-9)
 
 GitHub Actions runs three read-only jobs:
 
@@ -144,9 +145,11 @@ Release-oriented documentation:
 
 ## Run the worker intake (Milestone 1)
 
-The current worker persists jobs, items, attempts, and checkpoints in SQLite;
-it still uses a fake browser adapter until the Playwright milestone. It accepts
-one JSON object per line either from a file or standard input.
+The current worker uses Playwright and persists jobs, typed catalog items,
+attempts, and checkpoints in SQLite. Each item contains its external ID, name,
+price, source page number, and source URL. Input accepts one JSON object per
+line either from a file or standard input, including a UTF-8 BOM on the first
+standard-input record.
 
 ```powershell
 .\eng\dotnet.ps1 run --project .\src\Automation.Worker\Automation.Worker.csproj `
@@ -185,7 +188,9 @@ The worker owns one Chromium lifecycle and gives every job its own browser
 context. Catalog extraction uses `data-testid` and role/label locators, so the
 `dom-change` scenario preserves the same result. The `DemoUsername` and
 `DemoPassword` settings are only for the deterministic local stand and are
-never written to logs.
+never written to logs. The worker fills the labelled login fields, clicks
+`Sign in`, reads item cards, and clicks `Next page` until the button is absent
+or `maxPages` is reached.
 
 ## Retry and timeout behavior (Milestone 4)
 
@@ -209,6 +214,8 @@ JSON logs use stable event IDs: `1000` input rejection, `1001` completion,
 `1002` cancellation, `1003` job failure, `2001` retry scheduled, and `3001`
 artifact bundle created. The process exposes .NET `Meter` instruments named
 `automation.jobs.*`, `automation.pages.completed`, and `automation.retries`.
+They include completed, idempotently skipped, failed, and cancelled job
+counters plus a job-duration histogram.
 
 ## Concurrency and target rate limiting (Milestone 6)
 
@@ -232,9 +239,10 @@ and failure artifacts behind one local command:
 ```
 
 The script resets `artifacts/docker-demo`, starts `demo-site`, runs success,
-idempotent duplicate delivery, transient retry, duplicate-item, bounded
-concurrency, and permanent-failure scenarios, then prints SQLite counters and
-the generated evidence files. The worker image uses .NET 10, installs Chromium
+idempotent duplicate delivery, transient retry, natural pagination end,
+duplicate-item, bounded concurrency, real checkpoint resume, graceful
+cancellation, and permanent-failure scenarios. It then prints SQLite counters
+and generated evidence files. The worker image uses .NET 10, installs Chromium
 with Playwright's Linux dependencies during the image build, and runs as the
 non-root `app` user. The Compose `worker` and `demo-report` services are behind
 the `demo` profile, so `docker compose up demo-site` remains a lightweight

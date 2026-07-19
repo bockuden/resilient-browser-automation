@@ -1,0 +1,1 @@
+{"jobId":"catalog-playwright-resume","target":"demo-catalog","startUrl":"http://127.0.0.1:8080/catalog?scenario=success&run_id=playwright-resume-success","maxPages":4}

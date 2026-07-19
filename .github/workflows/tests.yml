@@ -101,6 +101,93 @@ jobs:
       - name: Transient retry recovery
         run: dotnet run --project src/Automation.Worker/Automation.Worker.csproj --configuration Release --no-build -- --jobs samples/jobs.playwright.transient.jsonl
 
+      - name: Natural catalog end
+        run: dotnet run --project src/Automation.Worker/Automation.Worker.csproj --configuration Release --no-build -- --jobs samples/jobs.playwright.natural-end.jsonl
+
+      - name: Create resumable failure after page 2
+        shell: bash
+        run: |
+          set +e
+          dotnet run --project src/Automation.Worker/Automation.Worker.csproj --configuration Release --no-build -- --jobs samples/jobs.playwright.resume.fail.jsonl
+          exit_code=$?
+          set -e
+          if [ "$exit_code" -ne 3 ]; then
+            echo "Expected resumable failure exit code 3, got $exit_code"
+            exit 1
+          fi
+
+      - name: Verify durable checkpoint before resume
+        run: |
+          python - <<'PY'
+          import sqlite3
+          with sqlite3.connect("artifacts/automation.db") as connection:
+              checkpoint = connection.execute(
+                  "select last_completed_page from checkpoints where job_id = ?",
+                  ("catalog-playwright-resume",),
+              ).fetchone()
+              item_count = connection.execute(
+                  "select count(*) from catalog_items where job_id = ?",
+                  ("catalog-playwright-resume",),
+              ).fetchone()[0]
+          assert checkpoint == (2,), checkpoint
+          assert item_count == 10, item_count
+          PY
+
+      - name: Resume from page 3
+        run: dotnet run --project src/Automation.Worker/Automation.Worker.csproj --configuration Release --no-build -- --jobs samples/jobs.playwright.resume.success.jsonl
+
+      - name: Graceful cancellation
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          set +e
+          Automation__Concurrency__ShutdownGracePeriodSeconds=1 \
+            dotnet src/Automation.Worker/bin/Release/net10.0/Automation.Worker.dll \
+            --jobs samples/jobs.playwright.cancel.jsonl \
+            > artifacts/cancellation.log 2>&1 &
+          worker_pid=$!
+          sleep 4
+          kill -TERM "$worker_pid"
+          wait "$worker_pid"
+          exit_code=$?
+          set -e
+          cat artifacts/cancellation.log
+          if [ "$exit_code" -ne 4 ]; then
+            echo "Expected cancellation exit code 4, got $exit_code"
+            exit 1
+          fi
+
+      - name: Verify E2E persistence
+        run: |
+          python - <<'PY'
+          import sqlite3
+          with sqlite3.connect("artifacts/automation.db") as connection:
+              natural_end = connection.execute(
+                  "select last_completed_page from checkpoints where job_id = ?",
+                  ("catalog-playwright-natural-end",),
+              ).fetchone()
+              resumed = connection.execute(
+                  "select last_completed_page from checkpoints where job_id = ?",
+                  ("catalog-playwright-resume",),
+              ).fetchone()
+              resumed_items = connection.execute(
+                  "select count(*) from catalog_items where job_id = ?",
+                  ("catalog-playwright-resume",),
+              ).fetchone()[0]
+              cancelled = connection.execute(
+                  "select status from jobs where job_id = ?",
+                  ("catalog-playwright-cancel",),
+              ).fetchone()
+              page_range = connection.execute(
+                  "select min(page_number), max(page_number) from catalog_items"
+              ).fetchone()
+          assert natural_end == (4,), natural_end
+          assert resumed == (4,), resumed
+          assert resumed_items == 20, resumed_items
+          assert cancelled == ("Cancelled",), cancelled
+          assert page_range == (1, 4), page_range
+          PY
+
       - name: Permanent failure evidence
         shell: bash
         run: |

@@ -97,12 +97,27 @@ try
     builder.Services.AddHostedService(serviceProvider => serviceProvider.GetRequiredService<AutomationWorkerService>());
 
     using var host = builder.Build();
+    var applicationLifetime = host.Services.GetRequiredService<IHostApplicationLifetime>();
+    using var consoleCancellationRegistration = cancellationSource.Token.Register(
+        applicationLifetime.StopApplication);
     await host.Services.GetRequiredService<SqliteMigrator>().MigrateAsync(cancellationSource.Token);
     await host.StartAsync(cancellationSource.Token);
 
     var worker = host.Services.GetRequiredService<AutomationWorkerService>();
+    var shutdownRequested = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    using var shutdownRegistration = applicationLifetime.ApplicationStopping.Register(
+        shutdownRequested.SetResult);
+    var completedTask = await Task.WhenAny(worker.Completion, shutdownRequested.Task);
+    if (completedTask == shutdownRequested.Task)
+    {
+        await host.StopAsync(CancellationToken.None);
+    }
+
     var summary = await worker.Completion;
-    await host.StopAsync(CancellationToken.None);
+    if (completedTask == worker.Completion)
+    {
+        await host.StopAsync(CancellationToken.None);
+    }
 
     Console.Out.WriteLine($"{{\"completedJobs\":{summary.CompletedJobs},\"rejectedJobs\":{summary.RejectedJobs},\"failedJobs\":{summary.FailedJobs},\"cancelledJobs\":{summary.CancelledJobs},\"exitCode\":{(int)summary.ExitCode}}}");
     return (int)summary.ExitCode;
