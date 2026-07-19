@@ -1,3 +1,6 @@
+using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Automation.Application;
 using Automation.Application.Abstractions;
 using Automation.Core.Jobs;
@@ -7,9 +10,6 @@ using Automation.Worker.Services;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-using System.Collections.Concurrent;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
 
 namespace Automation.UnitTests;
 

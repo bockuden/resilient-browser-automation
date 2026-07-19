@@ -1,9 +1,9 @@
 using Automation.Application;
 using Automation.Application.Abstractions;
+using Automation.Application.Retry;
 using Automation.Core.Checkpoints;
 using Automation.Core.Jobs;
 using Automation.Core.Results;
-using Automation.Application.Retry;
 using Automation.Storage;
 
 namespace Automation.IntegrationTests;

@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 jobs:
-  dotnet:
+  dotnet-fast:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -21,14 +21,28 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('global.json', 'Directory.Build.props', '**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
       - name: Restore
         run: dotnet restore
 
       - name: Build
         run: dotnet build --configuration Release --no-restore
 
-      - name: Test
-        run: dotnet test --configuration Release --no-build
+      - name: Analyzer and formatting check
+        run: dotnet format --verify-no-changes --no-restore
+
+      - name: Unit tests
+        run: dotnet test tests/Automation.UnitTests/Automation.UnitTests.csproj --configuration Release --no-build
+
+      - name: Integration tests
+        run: dotnet test tests/Automation.IntegrationTests/Automation.IntegrationTests.csproj --configuration Release --no-build
 
   demo-site:
     runs-on: ubuntu-latest
@@ -43,3 +57,69 @@ jobs:
       - name: Run test stand tests
         run: docker compose run --rm demo-site pytest -q
 
+  browser-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('global.json', 'Directory.Build.props', '**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build worker
+        run: dotnet build src/Automation.Worker/Automation.Worker.csproj --configuration Release --no-restore
+
+      - name: Install Chromium for Playwright
+        run: pwsh src/Automation.Worker/bin/Release/net10.0/playwright.ps1 install --with-deps chromium
+
+      - name: Start deterministic target
+        run: docker compose up --build --detach --wait demo-site
+
+      - name: Reset target counters
+        run: curl --fail --request POST http://localhost:8080/admin/reset
+
+      - name: Successful extraction
+        run: dotnet run --project src/Automation.Worker/Automation.Worker.csproj --configuration Release --no-build -- --jobs samples/jobs.playwright.success.jsonl
+
+      - name: Idempotent repeated delivery
+        run: dotnet run --project src/Automation.Worker/Automation.Worker.csproj --configuration Release --no-build -- --jobs samples/jobs.playwright.success.jsonl
+
+      - name: Transient retry recovery
+        run: dotnet run --project src/Automation.Worker/Automation.Worker.csproj --configuration Release --no-build -- --jobs samples/jobs.playwright.transient.jsonl
+
+      - name: Permanent failure evidence
+        shell: bash
+        run: |
+          set +e
+          dotnet run --project src/Automation.Worker/Automation.Worker.csproj --configuration Release --no-build -- --jobs samples/jobs.playwright.permanent.jsonl
+          exit_code=$?
+          if [ "$exit_code" -ne 3 ]; then
+            echo "Expected worker exit code 3, got $exit_code"
+            exit 1
+          fi
+
+      - name: Upload E2E failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-e2e-artifacts
+          path: artifacts/
+          if-no-files-found: ignore
+
+      - name: Stop deterministic target
+        if: always()
+        run: docker compose down

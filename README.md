@@ -7,8 +7,9 @@ bounded concurrency, structured logging, failure artifacts, and deterministic
 end-to-end tests against a local FastAPI test site.
 
 > Status: runnable worker with SQLite persistence, validated JSON Lines input,
-> typed configuration, structured logs, and a deterministic test site. The implementation is
-> intentionally split into reviewable milestones in the
+> typed configuration, structured logs, Playwright extraction, retries,
+> bounded concurrency, Docker Compose demo, and GitHub Actions proof. The
+> implementation is intentionally split into reviewable milestones in the
 > [development plan](docs/development-plan.en.md).
 
 ## Why this project
@@ -118,6 +119,29 @@ The FastAPI stand also has its own installable package boundary and CLI. See the
 [`test-stand` README](test-stand/README.md) and
 [ADR 0002](docs/adr/0002-package-ready-test-stand.md).
 
+## CI and release proof (Milestone 8)
+
+GitHub Actions runs three read-only jobs:
+
+- fast .NET restore, build, analyzer/format check, unit tests, and integration tests;
+- FastAPI stand tests through Docker Compose;
+- browser E2E with only Chromium and required Linux dependencies installed.
+
+The workflow caches NuGet packages only. Browser profiles, generated databases,
+traces, screenshots, and artifacts are not cached. E2E artifacts are uploaded
+only when the browser job fails.
+
+Release-oriented documentation:
+
+| Document | Purpose |
+| --- | --- |
+| [Architecture](docs/architecture.md) | Project boundaries and execution flow |
+| [Failure matrix](docs/failure-matrix.md) | Classification, action, and evidence |
+| [Security](docs/security.md) | Secrets, artifacts, CI permissions, containers |
+| [Troubleshooting](docs/troubleshooting.md) | Common local and Docker failure modes |
+| [Limitations](docs/limitations.md) | Explicit non-goals and review positioning |
+| [Release checklist](docs/release-checklist.md) | Checks before tagging `v1.0.0` |
+
 ## Run the worker intake (Milestone 1)
 
 The current worker persists jobs, items, attempts, and checkpoints in SQLite;
@@ -215,6 +239,16 @@ with Playwright's Linux dependencies during the image build, and runs as the
 non-root `app` user. The Compose `worker` and `demo-report` services are behind
 the `demo` profile, so `docker compose up demo-site` remains a lightweight
 test-stand command.
+
+Terminal failure evidence has this shape:
+
+```text
+artifacts/docker-demo/artifacts/compose-permanent/1/
+  error.json
+  page.html
+  screenshot.png
+  trace.zip
+```
 
 ## Engineering principles
 

@@ -1,8 +1,8 @@
 using Automation.Application.Abstractions;
+using Automation.Application.Retry;
 using Automation.Core.Checkpoints;
 using Automation.Core.Jobs;
 using Automation.Core.Results;
-using Automation.Application.Retry;
 
 namespace Automation.Application;
 

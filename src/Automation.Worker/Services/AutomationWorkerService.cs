@@ -1,3 +1,4 @@
+using System.Threading.Channels;
 using Automation.Application;
 using Automation.Application.Abstractions;
 using Automation.Worker.Configuration;
@@ -5,7 +6,6 @@ using Automation.Worker.Jobs;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Threading.Channels;
 
 namespace Automation.Worker.Services;
 

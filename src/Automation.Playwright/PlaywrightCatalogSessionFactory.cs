@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
-using Automation.Application.Abstractions;
 using Automation.Application;
+using Automation.Application.Abstractions;
 using Automation.Core.Jobs;
 using Automation.Core.Results;
 using Microsoft.Playwright;
@@ -19,7 +19,7 @@ public sealed class PlaywrightCatalogSessionFactory(
     public async Task<IBrowserCatalogSession> OpenAsync(AutomationJob job, CancellationToken cancellationToken)
     {
         var activeBrowser = await GetBrowserAsync(cancellationToken);
-            var context = await activeBrowser.NewContextAsync();
+        var context = await activeBrowser.NewContextAsync();
         await context.Tracing.StartAsync(new TracingStartOptions
         {
             Screenshots = true,

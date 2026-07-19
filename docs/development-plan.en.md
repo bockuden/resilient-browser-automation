@@ -207,6 +207,8 @@ Commit: `feat: package the complete local automation demo`.
 
 ### Milestone 8 — CI, documentation, and release proof
 
+Status: complete.
+
 1. Keep fast unit tests in the main job and browser E2E in a separate job.
 2. Install only Chromium and its required Linux dependencies in E2E CI.
 3. Cache NuGet packages, not browser profiles or generated user data.
