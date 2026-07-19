@@ -16,3 +16,51 @@ services:
       start_period: 5s
     init: true
 
+  worker:
+    build:
+      context: .
+      dockerfile: ./src/Automation.Worker/Dockerfile
+    profiles:
+      - demo
+    depends_on:
+      demo-site:
+        condition: service_healthy
+    environment:
+      Automation__Browser__Headless: "true"
+      Automation__Browser__NavigationTimeoutSeconds: "30"
+      Automation__Browser__OperationTimeoutSeconds: "30"
+      Automation__Concurrency__MaxConcurrentJobs: "2"
+      Automation__Concurrency__QueueCapacity: "8"
+      Automation__Concurrency__PerTargetRateLimit: "2"
+      Automation__Concurrency__PerTargetRatePeriodMilliseconds: "1000"
+      Automation__Concurrency__PerTargetBurstSize: "2"
+      Automation__Concurrency__ShutdownGracePeriodSeconds: "10"
+      Automation__Storage__ConnectionString: "Data Source=/data/automation.db"
+      Automation__Artifacts__RootPath: "/data/artifacts"
+    volumes:
+      - ./samples:/app/samples:ro
+      - ./artifacts/docker-demo:/data
+    command:
+      - --jobs
+      - /app/samples/jobs.compose.success.jsonl
+    init: true
+
+  demo-report:
+    build:
+      context: ./test-stand
+    profiles:
+      - demo
+    volumes:
+      - ./artifacts/docker-demo:/data:ro
+    command:
+      - python
+      - -c
+      - |
+        import json, sqlite3
+        db = "/data/automation.db"
+        with sqlite3.connect(db) as connection:
+            jobs = connection.execute("select status, count(*) from jobs group by status order by status").fetchall()
+            items = connection.execute("select count(*) from catalog_items").fetchone()[0]
+            checkpoints = connection.execute("select job_id, last_completed_page from checkpoints order by job_id").fetchall()
+        print(json.dumps({"jobs": jobs, "catalogItems": items, "checkpoints": checkpoints}, ensure_ascii=False))
+    init: true

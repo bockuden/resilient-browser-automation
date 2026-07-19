@@ -1,0 +1,1 @@
+{"jobId":"compose-transient","target":"demo-catalog","startUrl":"http://demo-site:8080/catalog?scenario=transient&run_id=compose-transient&fail_for=2","maxPages":4}

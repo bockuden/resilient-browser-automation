@@ -191,6 +191,8 @@ Commit: `feat: add bounded job concurrency and per-target limits`.
 
 ### Milestone 7 — complete Docker Compose demo
 
+Status: complete.
+
 1. Add a worker Dockerfile using an official Playwright .NET image or explicit browser dependencies.
 2. Extend Compose with `worker`, `demo-site`, SQLite storage, and artifact volumes.
 3. Add sample jobs for success, retry, resume, duplicate, cancellation, and failure.

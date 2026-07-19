@@ -1,0 +1,4 @@
+{"jobId":"compose-concurrent-001","target":"demo-catalog-a","startUrl":"http://demo-site:8080/catalog?scenario=success&run_id=compose-concurrent-001","maxPages":1}
+{"jobId":"compose-concurrent-002","target":"demo-catalog-b","startUrl":"http://demo-site:8080/catalog?scenario=success&run_id=compose-concurrent-002","maxPages":1}
+{"jobId":"compose-concurrent-003","target":"demo-catalog-a","startUrl":"http://demo-site:8080/catalog?scenario=success&run_id=compose-concurrent-003","maxPages":1}
+{"jobId":"compose-concurrent-004","target":"demo-catalog-b","startUrl":"http://demo-site:8080/catalog?scenario=success&run_id=compose-concurrent-004","maxPages":1}

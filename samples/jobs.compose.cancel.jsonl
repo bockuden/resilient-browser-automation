@@ -1,0 +1,1 @@
+{"jobId":"compose-cancel-slow","target":"demo-catalog","startUrl":"http://demo-site:8080/catalog?scenario=slow&run_id=compose-cancel-slow&delay_ms=30000","maxPages":4}

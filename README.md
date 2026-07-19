@@ -198,6 +198,24 @@ Before a job starts, the worker applies a per-target token bucket using
 `PerTargetBurstSize`. On shutdown, intake stops immediately; active jobs are
 given `ShutdownGracePeriodSeconds` before the remaining work is cancelled.
 
+## Complete Docker Compose demo (Milestone 7)
+
+The Compose demo packages the worker, deterministic FastAPI site, SQLite state,
+and failure artifacts behind one local command:
+
+```powershell
+.\eng\demo-compose.ps1
+```
+
+The script resets `artifacts/docker-demo`, starts `demo-site`, runs success,
+idempotent duplicate delivery, transient retry, duplicate-item, bounded
+concurrency, and permanent-failure scenarios, then prints SQLite counters and
+the generated evidence files. The worker image uses .NET 10, installs Chromium
+with Playwright's Linux dependencies during the image build, and runs as the
+non-root `app` user. The Compose `worker` and `demo-report` services are behind
+the `demo` profile, so `docker compose up demo-site` remains a lightweight
+test-stand command.
+
 ## Engineering principles
 
 - At-least-once job delivery with exactly-once observable results per `jobId`.
