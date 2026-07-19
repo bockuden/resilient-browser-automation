@@ -1,0 +1,1 @@
+{"jobId":"catalog-playwright-permanent","target":"demo-catalog","startUrl":"http://127.0.0.1:8080/catalog?scenario=permanent&run_id=playwright-permanent","maxPages":4}

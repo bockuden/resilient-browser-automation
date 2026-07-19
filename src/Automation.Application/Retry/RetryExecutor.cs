@@ -34,6 +34,7 @@ public sealed class RetryExecutor(
                 }
 
                 observer.OnRetry(new RetryDecision(attempt + 1, error.Message, delay, remaining));
+                AutomationMetrics.Retries.Add(1);
                 await clock.DelayAsync(delay, cancellationToken);
             }
         }

@@ -59,6 +59,11 @@ public sealed class AutomationWorkerOptionsValidator : IValidateOptions<Automati
             errors.Add("Automation:Artifacts:RootPath is required.");
         }
 
+        if (options.Artifacts.RetentionDays <= 0 || options.Artifacts.MaximumTotalSizeMegabytes <= 0)
+        {
+            errors.Add("Automation artifact retention values must be greater than zero.");
+        }
+
         return errors.Count == 0
             ? ValidateOptionsResult.Success
             : ValidateOptionsResult.Fail(errors);

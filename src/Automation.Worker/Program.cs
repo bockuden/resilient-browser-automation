@@ -4,6 +4,7 @@ using Automation.Application.Retry;
 using Automation.Playwright;
 using Automation.Storage;
 using Automation.Worker.Adapters;
+using Automation.Worker.Artifacts;
 using Automation.Worker.Configuration;
 using Automation.Worker.Jobs;
 using Automation.Worker.Services;
@@ -85,7 +86,10 @@ try
             DemoPassword = browser.DemoPassword,
         });
     });
-    builder.Services.AddSingleton<IFailureArtifactWriter, NoOpFailureArtifactWriter>();
+    builder.Services.AddSingleton<IFailureArtifactWriter>(serviceProvider =>
+        new FileFailureArtifactWriter(
+            serviceProvider.GetRequiredService<IOptions<AutomationWorkerOptions>>().Value.Artifacts,
+            serviceProvider.GetRequiredService<ILogger<FileFailureArtifactWriter>>()));
     builder.Services.AddSingleton<JobRunner>();
     builder.Services.AddSingleton<AutomationWorkerService>();
     builder.Services.AddHostedService(serviceProvider => serviceProvider.GetRequiredService<AutomationWorkerService>());

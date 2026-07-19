@@ -59,4 +59,8 @@ public sealed class StorageOptions
 public sealed class ArtifactOptions
 {
     public string RootPath { get; init; } = "artifacts";
+
+    public int RetentionDays { get; init; } = 14;
+
+    public int MaximumTotalSizeMegabytes { get; init; } = 512;
 }

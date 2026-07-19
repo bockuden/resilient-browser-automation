@@ -172,6 +172,20 @@ remaining whole-job budget. A permanent HTTP 500 or an invalid DOM contract is
 not retried. Retry logs include the reason, next attempt, delay, and remaining
 budget; cancellation interrupts backoff immediately.
 
+## Failure evidence and metrics (Milestone 5)
+
+For a terminal browser failure, the worker writes a redacted bundle to
+`artifacts/{safe-job-id}/{attempt}/`: `error.json`, `page.html`,
+`screenshot.png`, and `trace.zip` when each item is available. Metadata is
+written atomically; a failure while collecting diagnostics never replaces the
+original automation error. Retention is configured through
+`Automation:Artifacts:RetentionDays` and `MaximumTotalSizeMegabytes`.
+
+JSON logs use stable event IDs: `1000` input rejection, `1001` completion,
+`1002` cancellation, `1003` job failure, `2001` retry scheduled, and `3001`
+artifact bundle created. The process exposes .NET `Meter` instruments named
+`automation.jobs.*`, `automation.pages.completed`, and `automation.retries`.
+
 ## Engineering principles
 
 - At-least-once job delivery with exactly-once observable results per `jobId`.

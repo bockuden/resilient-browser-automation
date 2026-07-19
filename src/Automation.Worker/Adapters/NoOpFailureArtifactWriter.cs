@@ -4,6 +4,5 @@ namespace Automation.Worker.Adapters;
 
 public sealed class NoOpFailureArtifactWriter : IFailureArtifactWriter
 {
-    public Task CaptureAsync(string jobId, Exception error, CancellationToken cancellationToken) => Task.CompletedTask;
+    public Task<string?> CaptureAsync(string jobId, Exception error, CancellationToken cancellationToken) => Task.FromResult<string?>(null);
 }
-

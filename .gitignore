@@ -5,6 +5,8 @@
 .vscode/
 TestResults/
 artifacts/
+!src/Automation.Worker/Artifacts/
+!src/Automation.Worker/Artifacts/*.cs
 *.db
 *.db-shm
 *.db-wal

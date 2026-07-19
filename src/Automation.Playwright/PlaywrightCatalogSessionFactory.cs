@@ -19,7 +19,13 @@ public sealed class PlaywrightCatalogSessionFactory(
     public async Task<IBrowserCatalogSession> OpenAsync(AutomationJob job, CancellationToken cancellationToken)
     {
         var activeBrowser = await GetBrowserAsync(cancellationToken);
-        var context = await activeBrowser.NewContextAsync();
+            var context = await activeBrowser.NewContextAsync();
+        await context.Tracing.StartAsync(new TracingStartOptions
+        {
+            Screenshots = true,
+            Snapshots = true,
+            Sources = true,
+        });
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(options.OperationTimeoutMilliseconds);
         page.SetDefaultNavigationTimeout(options.NavigationTimeoutMilliseconds);
@@ -32,7 +38,6 @@ public sealed class PlaywrightCatalogSessionFactory(
                 Timeout = options.NavigationTimeoutMilliseconds,
             });
             await AuthenticateDemoSiteIfRequiredAsync(page);
-            await PlaywrightCatalogSession.WaitForCatalogPageAsync(page, 1);
             return new PlaywrightCatalogSession(context, page);
         }
         catch
@@ -112,12 +117,19 @@ public sealed class PlaywrightBrowserOptions
     public required string DemoPassword { get; init; }
 }
 
-internal sealed class PlaywrightCatalogSession(IBrowserContext context, IPage page) : IBrowserCatalogSession
+internal sealed class PlaywrightCatalogSession(IBrowserContext context, IPage page) : IBrowserCatalogSession, IFailureEvidenceCollector
 {
     private int loadedPage = 1;
+    private bool initialPageReady;
 
     public async Task<IReadOnlyCollection<CatalogItem>> ExtractPageAsync(int pageNumber, CancellationToken cancellationToken)
     {
+        if (!initialPageReady)
+        {
+            await WaitForCatalogPageAsync(page, 1);
+            initialPageReady = true;
+        }
+
         if (!await MoveToPageAsync(pageNumber))
         {
             return [];
@@ -145,6 +157,43 @@ internal sealed class PlaywrightCatalogSession(IBrowserContext context, IPage pa
     }
 
     public ValueTask DisposeAsync() => context.DisposeAsync();
+
+    public async Task CaptureFailureEvidenceAsync(string directoryPath, CancellationToken cancellationToken)
+    {
+        Directory.CreateDirectory(directoryPath);
+
+        try
+        {
+            await page.ScreenshotAsync(new PageScreenshotOptions
+            {
+                Path = Path.Combine(directoryPath, "screenshot.png"),
+                FullPage = true,
+            });
+        }
+        catch
+        {
+        }
+
+        try
+        {
+            var html = await page.ContentAsync();
+            await File.WriteAllTextAsync(Path.Combine(directoryPath, "page.html"), RedactHtml(html), cancellationToken);
+        }
+        catch
+        {
+        }
+
+        try
+        {
+            await context.Tracing.StopAsync(new TracingStopOptions
+            {
+                Path = Path.Combine(directoryPath, "trace.zip"),
+            });
+        }
+        catch
+        {
+        }
+    }
 
     internal static async Task WaitForCatalogPageAsync(IPage page, int expectedPage)
     {
@@ -196,4 +245,10 @@ internal sealed class PlaywrightCatalogSession(IBrowserContext context, IPage pa
 
         return true;
     }
+
+    private static string RedactHtml(string value) =>
+        Regex.Replace(
+            value,
+            "(?i)(password|token|authorization|cookie)(\\s*[=:]\\s*[\\\"'])[^\\\"']*",
+            "$1$2[REDACTED]");
 }

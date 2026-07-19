@@ -161,7 +161,7 @@ public sealed class SqliteJobPersistenceTests
 
     private sealed class NoOpFailureArtifactWriter : IFailureArtifactWriter
     {
-        public Task CaptureAsync(string jobId, Exception error, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task<string?> CaptureAsync(string jobId, Exception error, CancellationToken cancellationToken) => Task.FromResult<string?>(null);
     }
 
     private sealed class TestClock : IJobClock

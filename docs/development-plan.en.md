@@ -157,6 +157,8 @@ Commit: `feat: add classified retries and finite timeout budgets`.
 
 ### Milestone 5 — evidence and observability
 
+Status: complete.
+
 1. Configure JSON console logs with stable event IDs.
 2. Add OpenTelemetry metrics for jobs, pages, retries, duration, and failures.
 3. On terminal browser failure, store screenshot, HTML, trace, and `error.json`.
