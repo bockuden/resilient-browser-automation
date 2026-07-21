@@ -8,8 +8,8 @@ end-to-end tests against a local FastAPI test site.
 
 > Status: runnable worker with SQLite persistence, validated JSON Lines input,
 > typed configuration, structured logs, Playwright extraction, retries,
-> bounded concurrency, Docker Compose demo, and GitHub Actions proof. The
-> implementation is intentionally split into reviewable milestones in the
+> bounded concurrency, Docker Compose demo, and GitHub Actions proof. Design
+> decisions and implementation history are documented in the
 > [development plan](docs/development-plan.en.md).
 
 ## Why this project
@@ -120,7 +120,7 @@ The FastAPI stand also has its own installable package boundary and CLI. See the
 [`test-stand` README](test-stand/README.md) and
 [ADR 0002](docs/adr/0002-package-ready-test-stand.md).
 
-## CI and release proof (Milestones 8-9)
+## CI and release proof
 
 GitHub Actions runs three read-only jobs:
 
@@ -143,7 +143,7 @@ Release-oriented documentation:
 | [Limitations](docs/limitations.md) | Explicit non-goals and review positioning |
 | [Release checklist](docs/release-checklist.md) | Checks before tagging `v1.0.0` |
 
-## Run the worker intake (Milestone 1)
+## Run the worker
 
 The current worker uses Playwright and persists jobs, typed catalog items,
 attempts, and checkpoints in SQLite. Each item contains its external ID, name,
@@ -164,7 +164,7 @@ retry, concurrency, storage, and artifact values are validated when it starts.
 `Automation:Storage:StaleRunningJobSeconds` defines when an interrupted
 `Running` job can be claimed again; completed jobs are never reopened.
 
-## Run Playwright extraction (Milestone 3)
+## Playwright extraction
 
 Build first, then install the Chromium revision paired with the pinned
 Playwright package. The local browser directory is ignored by Git.
@@ -192,7 +192,7 @@ never written to logs. The worker fills the labelled login fields, clicks
 `Sign in`, reads item cards, and clicks `Next page` until the button is absent
 or `maxPages` is reached.
 
-## Retry and timeout behavior (Milestone 4)
+## Retry and timeout behavior
 
 For HTTP `408`, `429`, `502`, `503`, `504`, selected browser timeouts, and
 browser disconnects, the worker retries the current page with bounded
@@ -201,7 +201,7 @@ remaining whole-job budget. A permanent HTTP 500 or an invalid DOM contract is
 not retried. Retry logs include the reason, next attempt, delay, and remaining
 budget; cancellation interrupts backoff immediately.
 
-## Failure evidence and metrics (Milestone 5)
+## Failure evidence and metrics
 
 For a terminal browser failure, the worker writes a redacted bundle to
 `artifacts/{safe-job-id}/{attempt}/`: `error.json`, `page.html`,
@@ -217,7 +217,7 @@ artifact bundle created. The process exposes .NET `Meter` instruments named
 They include completed, idempotently skipped, failed, and cancelled job
 counters plus a job-duration histogram.
 
-## Concurrency and target rate limiting (Milestone 6)
+## Concurrency and target rate limiting
 
 Worker intake uses a bounded channel configured by
 `Automation:Concurrency:QueueCapacity`. `MaxConcurrentJobs` controls how many
@@ -229,7 +229,7 @@ Before a job starts, the worker applies a per-target token bucket using
 `PerTargetBurstSize`. On shutdown, intake stops immediately; active jobs are
 given `ShutdownGracePeriodSeconds` before the remaining work is cancelled.
 
-## Complete Docker Compose demo (Milestone 7)
+## Docker Compose demo
 
 The Compose demo packages the worker, deterministic FastAPI site, SQLite state,
 and failure artifacts behind one local command:
