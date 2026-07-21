@@ -91,9 +91,7 @@ tests/                      C# test projects added by the implementation plan
 ```
 
 The complete English plan is tracked at
-[`docs/development-plan.en.md`](docs/development-plan.en.md). A Russian working
-plan exists locally at `docs/development-plan.ru.md` and is excluded through
-the repository-local Git exclude file, not through `.gitignore`.
+[`docs/development-plan.en.md`](docs/development-plan.en.md).
 
 ## Verification available now
 
