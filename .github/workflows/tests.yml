@@ -44,19 +44,6 @@ jobs:
       - name: Integration tests
         run: dotnet test tests/Automation.IntegrationTests/Automation.IntegrationTests.csproj --configuration Release --no-build
 
-  demo-site:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v6
-
-      - name: Build test stand
-        run: docker compose build demo-site
-
-      - name: Run test stand tests
-        run: docker compose run --rm demo-site pytest -q
-
   browser-e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -86,8 +73,11 @@ jobs:
       - name: Install Chromium for Playwright
         run: pwsh src/Automation.Worker/bin/Release/net10.0/playwright.ps1 install --with-deps chromium
 
+      - name: Pull deterministic target
+        run: docker compose pull demo-site
+
       - name: Start deterministic target
-        run: docker compose up --build --detach --wait demo-site
+        run: docker compose up --detach --wait demo-site
 
       - name: Reset target counters
         run: curl --fail --request POST http://localhost:8080/admin/reset

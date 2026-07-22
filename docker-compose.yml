@@ -1,7 +1,6 @@
 services:
   demo-site:
-    build:
-      context: ./test-stand
+    image: ghcr.io/bockuden/resilient-automation-test-stand:0.1.0
     ports:
       - "8080:8080"
     healthcheck:
@@ -46,8 +45,7 @@ services:
     init: true
 
   demo-report:
-    build:
-      context: ./test-stand
+    image: ghcr.io/bockuden/resilient-automation-test-stand:0.1.0
     profiles:
       - demo
     volumes:

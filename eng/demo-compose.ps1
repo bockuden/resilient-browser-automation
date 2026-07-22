@@ -57,7 +57,8 @@ if (Test-Path -LiteralPath $resolvedData) {
 New-Item -ItemType Directory -Path $resolvedData | Out-Null
 
 try {
-    Invoke-DemoCommand "Build and start deterministic FastAPI stand" @("compose", "up", "--build", "--detach", "--wait", "demo-site")
+    Invoke-DemoCommand "Pull deterministic FastAPI stand" @("compose", "pull", "demo-site")
+    Invoke-DemoCommand "Start deterministic FastAPI stand" @("compose", "up", "--detach", "--wait", "demo-site")
     Invoke-DemoCommand "Reset scenario counters" @("compose", "exec", "-T", "demo-site", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/admin/reset', data=b'', timeout=5).read()")
 
     Invoke-DemoCommand "Run happy-path extraction" @("compose", "run", "--build", "--rm", "worker", "--jobs", "/app/samples/jobs.compose.success.jsonl")
