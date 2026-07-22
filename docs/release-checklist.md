@@ -6,7 +6,8 @@ Use this checklist before tagging `v1.0.0`.
 - Clean clone on Linux or a Linux container path.
 - `global.json` and GitHub Actions use the same .NET major version.
 - `docker compose config` succeeds.
-- `docker compose run --rm demo-site pytest -q` succeeds.
+- `docker compose pull demo-site` resolves the pinned stand image.
+- The pinned stand release passed its independent package, OpenAPI, and Docker CI.
 - `dotnet build --configuration Release` succeeds with zero warnings.
 - Unit and integration tests pass.
 - Browser E2E installs only Chromium and required Linux dependencies.
@@ -15,6 +16,7 @@ Use this checklist before tagging `v1.0.0`.
 - `maxPages` above the catalog size leaves the checkpoint on the real last page.
 - Catalog rows contain their source page number.
 - Real browser E2E proves checkpoint resume and graceful cancellation.
+- Full browser E2E passes against the exact stand version in `docker-compose.yml`.
 - Transient and permanent failures are visibly different in logs.
 - Permanent failure writes `error.json`, `page.html`, `screenshot.png`, and
   `trace.zip`.

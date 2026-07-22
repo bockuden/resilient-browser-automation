@@ -52,13 +52,13 @@ tests/
   Automation.UnitTests/
   Automation.IntegrationTests/
   Automation.EndToEndTests/
-test-stand/                 FastAPI app, tests, Dockerfile
 docs/                       ADRs and the tracked English plan
 ```
 
 Dependencies point inward. Core does not reference Playwright, SQLite, hosting,
 or logging. Application defines the use case and ports; outer projects implement
-the adapters.
+the adapters. The deterministic target is an external, versioned dependency at
+`https://github.com/bockuden/resilient-automation-test-stand`.
 
 ## 4. Milestones
 
@@ -80,7 +80,7 @@ Status in the initial scaffold: complete.
 Acceptance:
 
 - `docker compose config` succeeds.
-- `docker compose run --rm demo-site pytest -q` succeeds.
+- `docker compose pull demo-site` resolves the pinned stand image.
 - `dotnet build -c Release` succeeds with .NET 10.
 - `git check-ignore -v docs/development-plan.ru.md` names `.git/info/exclude`.
 
@@ -217,9 +217,11 @@ Status: complete.
 6. Add a short terminal demo, architecture diagram, and sample artifact tree.
 7. Tag `v1.0.0` only after clean-clone checks on Windows and Linux/container paths.
 
-Acceptance: CI runs analyzers, build, unit, integration, E2E, and FastAPI tests;
-workflow permissions remain read-only; README reaches a visible result in under
-ten minutes; limitations avoid anti-bot or production-scale claims.
+Acceptance: worker CI runs analyzers, build, unit, integration, and E2E against
+the pinned stand image; stand CI independently runs FastAPI, package, contract,
+and Docker tests; workflow permissions remain minimal; README reaches a visible
+result in under ten minutes; limitations avoid anti-bot or production-scale
+claims.
 
 Commit: `docs: publish reproducible v1 automation evidence`.
 
@@ -238,8 +240,8 @@ Status: complete.
 
 Acceptance: `maxPages=10` stops and checkpoints at page 4; page numbers are
 stored with catalog rows; Compose shows a failure after page 2 followed by a
-resume at page 3; the slow browser job exits with cancellation code `4`; FastAPI
-tests import and package the renamed module.
+resume at page 3; the slow browser job exits with cancellation code `4`; the
+stand's independent CI imports and packages the renamed module.
 
 Commit: `fix: harden release pagination recovery and cancellation`.
 
@@ -296,3 +298,19 @@ Commit: `fix: harden release pagination recovery and cancellation`.
 - Browser processes and contexts are always disposed.
 - No test depends on a public website or live credential.
 - The Russian plan is absent from `git ls-files` and ignored by `.git/info/exclude`.
+
+## 9. Extracted FastAPI test stand
+
+Status: complete as of 2026-07-22.
+
+- Source and history: `https://github.com/bockuden/resilient-automation-test-stand`.
+- Contract and package version: `0.1.0`.
+- Worker image: `ghcr.io/bockuden/resilient-automation-test-stand:0.1.0`.
+- The stand owns Python 3.11–3.13 tests, OpenAPI snapshot verification,
+  wheel/sdist builds, runtime-image checks, GHCR publication, and releases.
+- This repository owns compatibility E2E against the version pinned in Compose.
+- Updating that version requires a successful stand release followed by the
+  complete worker E2E suite; `latest` is not used for compatibility validation.
+
+The extraction preserved Git history. The original `test-stand` directory was
+removed only after the published `0.1.0` image passed the complete Compose demo.

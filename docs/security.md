@@ -16,9 +16,9 @@ target is local and deterministic.
 ## Browser Artifacts
 
 HTML and JSON metadata can be redacted before writing. Screenshots and traces
-are evidence, so they may contain visible page data from the target. In this
-repository the only target is the local FastAPI stand; for real systems, route
-artifacts to restricted storage and apply retention controls.
+are evidence, so they may contain visible page data from the target. The demo
+target is the pinned FastAPI stand image running locally; for real systems,
+route artifacts to restricted storage and apply retention controls.
 
 ## CI Permissions
 
@@ -35,4 +35,6 @@ databases, and generated artifacts are not cached.
 ## Containers
 
 The worker Docker image runs as the non-root `app` user. SQLite and artifacts
-are written through a mounted `/data` volume.
+are written through a mounted `/data` volume. Compose pins the external test
+stand to version `0.1.0`; version updates require a reviewed Compose change and
+a complete browser E2E run.

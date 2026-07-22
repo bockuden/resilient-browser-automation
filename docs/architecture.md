@@ -12,7 +12,7 @@ flowchart LR
     Runner --> StoragePort["Job/checkpoint/item ports"]
     BrowserPort --> Playwright["Automation.Playwright"]
     StoragePort --> SQLite["Automation.Storage SQLite"]
-    Playwright --> Demo["FastAPI demo-site"]
+    Playwright --> Demo["Versioned FastAPI stand image"]
     Runner --> Artifacts["Failure artifacts"]
 ```
 
@@ -25,7 +25,13 @@ flowchart LR
 | `Automation.Playwright` | Chromium lifecycle, page interaction, extraction, screenshots, HTML, trace | Persistence decisions |
 | `Automation.Storage` | SQLite migrations, claims, checkpoints, item upserts | Browser behavior |
 | `Automation.Worker` | Host, dependency injection, config, job intake, concurrency | Domain rules |
-| `test-stand` | Deterministic FastAPI target for E2E proof | Public website dependencies |
+
+The deterministic target is an external dependency pinned in Compose as
+`ghcr.io/bockuden/resilient-automation-test-stand:0.1.0`. Its source, API
+contract, package tests, and release workflow live in the
+[stand repository](https://github.com/bockuden/resilient-automation-test-stand).
+The worker repository owns compatibility E2E; the stand repository owns its
+package and image correctness.
 
 ## Execution Flow
 

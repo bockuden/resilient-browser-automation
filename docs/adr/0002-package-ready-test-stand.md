@@ -1,6 +1,6 @@
 # ADR 0002: Keep the FastAPI stand independently distributable
 
-- Status: accepted
+- Status: superseded by [ADR 0003](0003-extract-fastapi-test-stand.md)
 - Date: 2026-07-16
 
 ## Context

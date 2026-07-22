@@ -4,7 +4,7 @@ A production-style browser automation worker built with C# and .NET 10.
 
 The project demonstrates idempotent job execution, checkpoint-based recovery,
 bounded concurrency, structured logging, failure artifacts, and deterministic
-end-to-end tests against a local FastAPI test site.
+end-to-end tests against a versioned FastAPI test stand.
 
 > Status: runnable worker with SQLite persistence, validated JSON Lines input,
 > typed configuration, structured logs, Playwright extraction, retries,
@@ -45,7 +45,7 @@ flowchart LR
     W --> A["Application job runner"]
     A --> P["Playwright adapter"]
     A --> S["SQLite repositories"]
-    P --> D["FastAPI demo site"]
+    P --> D["Versioned FastAPI stand image"]
     A --> F["Failure artifacts"]
     A --> L["Structured logs"]
 ```
@@ -58,7 +58,8 @@ SQLite, hosting, or logging implementations.
 Requirements: Docker with the Compose plugin.
 
 ```bash
-docker compose up --build demo-site
+docker compose pull demo-site
+docker compose up --detach --wait demo-site
 ```
 
 Then open `http://localhost:8080/catalog`. Health status is available at
@@ -79,15 +80,19 @@ Useful deterministic scenarios:
 Use a unique `run_id` query value to isolate counters between test cases. Reset
 all counters with `POST /admin/reset`.
 
+Compose pins
+`ghcr.io/bockuden/resilient-automation-test-stand:0.1.0`. The stand has an
+independent source repository, contract, tests, and release cycle at
+[bockuden/resilient-automation-test-stand](https://github.com/bockuden/resilient-automation-test-stand).
+
 ## Repository layout
 
 ```text
 src/
   Automation.Core/          Domain records and invariants
   Automation.Application/   Use-case boundary and ports
-test-stand/                 Deterministic FastAPI browser target
 docs/                       Architecture decisions and English execution plan
-tests/                      C# test projects added by the implementation plan
+tests/                      C# unit and integration test projects
 ```
 
 The complete English plan is tracked at
@@ -97,7 +102,8 @@ The complete English plan is tracked at
 
 ```bash
 docker compose config
-docker compose run --rm demo-site pytest -q
+docker compose pull demo-site
+docker compose up --detach --wait demo-site
 dotnet build --configuration Release
 ```
 
@@ -114,17 +120,20 @@ the system PATH:
   '-p:UseSharedCompilation=false'
 ```
 
-The FastAPI stand also has its own installable package boundary and CLI. See the
-[`test-stand` README](test-stand/README.md) and
-[ADR 0002](docs/adr/0002-package-ready-test-stand.md).
+The FastAPI stand's package, CLI, API contract, and release instructions live in
+its [independent repository](https://github.com/bockuden/resilient-automation-test-stand).
+The extraction is recorded in [ADR 0003](docs/adr/0003-extract-fastapi-test-stand.md).
 
 ## CI and release proof
 
-GitHub Actions runs three read-only jobs:
+GitHub Actions runs two read-only jobs:
 
 - fast .NET restore, build, analyzer/format check, unit tests, and integration tests;
-- FastAPI stand tests through Docker Compose;
-- browser E2E with only Chromium and required Linux dependencies installed.
+- browser E2E with only Chromium and required Linux dependencies installed,
+  using the pinned external stand image.
+
+The stand repository independently tests Python 3.11–3.13, builds wheel/sdist,
+checks the OpenAPI snapshot, and verifies its production image before release.
 
 The workflow caches NuGet packages only. Browser profiles, generated databases,
 traces, screenshots, and artifacts are not cached. E2E artifacts are uploaded
@@ -172,9 +181,10 @@ $env:PLAYWRIGHT_BROWSERS_PATH = "$PWD/.playwright-browsers"
 .\src\Automation.Worker\bin\Release\net10.0\playwright.ps1 install chromium
 ```
 
-Start the test stand with `docker compose up --build demo-site`, then run a
-sample job from another PowerShell window. The sample expects the published
-host port at `localhost:8080`.
+Pull and start the pinned test stand with `docker compose pull demo-site` and
+`docker compose up --detach --wait demo-site`, then run a sample job from
+another PowerShell window. The sample expects the published host port at
+`localhost:8080`.
 
 ```powershell
 $env:PLAYWRIGHT_BROWSERS_PATH = "$PWD/.playwright-browsers"
@@ -229,14 +239,14 @@ given `ShutdownGracePeriodSeconds` before the remaining work is cancelled.
 
 ## Docker Compose demo
 
-The Compose demo packages the worker, deterministic FastAPI site, SQLite state,
-and failure artifacts behind one local command:
+The Compose demo combines the worker, versioned FastAPI stand image, SQLite
+state, and failure artifacts behind one local command:
 
 ```powershell
 .\eng\demo-compose.ps1
 ```
 
-The script resets `artifacts/docker-demo`, starts `demo-site`, runs success,
+The script resets `artifacts/docker-demo`, pulls and starts `demo-site`, runs success,
 idempotent duplicate delivery, transient retry, natural pagination end,
 duplicate-item, bounded concurrency, real checkpoint resume, graceful
 cancellation, and permanent-failure scenarios. It then prints SQLite counters
@@ -244,7 +254,7 @@ and generated evidence files. The worker image uses .NET 10, installs Chromium
 with Playwright's Linux dependencies during the image build, and runs as the
 non-root `app` user. The Compose `worker` and `demo-report` services are behind
 the `demo` profile, so `docker compose up demo-site` remains a lightweight
-test-stand command.
+deterministic-target command.
 
 Terminal failure evidence has this shape:
 

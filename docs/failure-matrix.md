@@ -15,5 +15,6 @@
 | Cancellation | Terminal non-success | Mark cancelled | Structured event `1002` |
 | Artifact capture failure | Diagnostics failure | Preserve original exception | Error log for original failure |
 
-The deterministic FastAPI stand exercises these cases without depending on a
-public website or live credentials.
+The pinned external FastAPI stand image exercises these cases without depending
+on a public website or live credentials. Worker E2E therefore validates the
+specific stand contract version consumed by Compose.
