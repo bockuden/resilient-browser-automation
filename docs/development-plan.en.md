@@ -301,11 +301,11 @@ Commit: `fix: harden release pagination recovery and cancellation`.
 
 ## 9. Extracted FastAPI test stand
 
-Status: complete as of 2026-07-22.
+Status: complete as of 2026-07-22; compatibility pin updated on 2026-07-24.
 
 - Source and history: `https://github.com/bockuden/resilient-automation-test-stand`.
-- Contract and package version: `0.1.0`.
-- Worker image: `ghcr.io/bockuden/resilient-automation-test-stand:0.1.0`.
+- Contract and package version used by the worker: `0.4.0`.
+- Worker image: `ghcr.io/bockuden/resilient-automation-test-stand:0.4.0`.
 - The stand owns Python 3.11–3.13 tests, OpenAPI snapshot verification,
   wheel/sdist builds, runtime-image checks, GHCR publication, and releases.
 - This repository owns compatibility E2E against the version pinned in Compose.
@@ -314,3 +314,41 @@ Status: complete as of 2026-07-22.
 
 The extraction preserved Git history. The original `test-stand` directory was
 removed only after the published `0.1.0` image passed the complete Compose demo.
+
+## 10. Stand compatibility and C# release gates
+
+### C# D1 — after stand 0.4.0
+
+Status: complete on 2026-07-24.
+
+- [x] Pin the Compose stand image to `0.4.0` and run full browser E2E.
+- [x] Update actual version references in README, architecture, security,
+  limitations, and ADR after successful E2E.
+- [x] Keep `latest` out of compatibility validation.
+- [x] Record the result in
+  [`docs/stand-0.4.0-compatibility.md`](stand-0.4.0-compatibility.md) without a
+  C# `v1.0.0` release.
+
+The trigger was met: stand `0.4.0` is published and installable from PyPI and
+GHCR.
+
+### Candidate release verification
+
+- [ ] After E–G and C# D1 are complete, create and push `v1.0.0rc1`; verify its
+  PyPI and GHCR prerelease publication and install wheel/sdist from PyPI before
+  releasing `v1.0.0`.
+
+### C# D2 — after stand 1.0.0rc1, before GA
+
+- [ ] Run a separate compatibility pass against the exactly published
+  `1.0.0rc1`, not a local checkout.
+- [ ] Cover success, transient, permanent, DOM change, duplicates, login,
+  resume, cancellation, natural end, and concurrent scenarios.
+- [ ] Verify contract use does not depend on Python implementation details.
+
+### C# D3 — after stand 1.0.0
+
+- [ ] Pin Compose to exact stand version `1.0.0`, repeat clean-clone/demo/CI,
+  then tag the C# repository `v1.0.0`.
+- [ ] Cross-link both release notes: the stand to this production-style consumer
+  proof, and the C# release to the exact tested stand.

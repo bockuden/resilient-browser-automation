@@ -81,7 +81,7 @@ Use a unique `run_id` query value to isolate counters between test cases. Reset
 all counters with `POST /admin/reset`.
 
 Compose pins
-`ghcr.io/bockuden/resilient-automation-test-stand:0.1.0`. The stand has an
+`ghcr.io/bockuden/resilient-automation-test-stand:0.4.0`. The stand has an
 independent source repository, contract, tests, and release cycle at
 [bockuden/resilient-automation-test-stand](https://github.com/bockuden/resilient-automation-test-stand).
 

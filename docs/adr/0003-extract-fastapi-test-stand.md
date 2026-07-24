@@ -27,6 +27,18 @@ Update the Compose image version only in an intentional worker change after the
 new stand release succeeds independently. Run the complete browser E2E suite
 before accepting that change. Do not consume `latest` in worker validation.
 
+## Compatibility update: stand 0.4.0
+
+On 2026-07-24, C# compatibility gate D1 validated the independently published
+stand version `0.4.0`. Compose now consumes:
+
+`ghcr.io/bockuden/resilient-automation-test-stand:0.4.0`
+
+The validation covered the full Compose demo plus explicit DOM-change and
+protected-login Chromium scenarios. The recorded result is
+[`stand-0.4.0-compatibility.md`](../stand-0.4.0-compatibility.md). This is a
+consumer-evidence commit, not a C# `v1.0.0` release.
+
 ## Consequences
 
 - The C# repository no longer contains or tests Python source.
