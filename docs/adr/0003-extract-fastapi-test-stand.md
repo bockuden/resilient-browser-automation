@@ -39,6 +39,19 @@ protected-login Chromium scenarios. The recorded result is
 [`stand-0.4.0-compatibility.md`](../stand-0.4.0-compatibility.md). This is a
 consumer-evidence commit, not a C# `v1.0.0` release.
 
+## Compatibility update: stand 1.0.0rc1
+
+On 2026-07-25, C# compatibility gate D2 validated the exactly published stand
+prerelease `1.0.0rc1`. Compose now consumes:
+
+`ghcr.io/bockuden/resilient-automation-test-stand:1.0.0rc1`
+
+The consumer installed both the PyPI wheel and sdist, then ran the full Compose
+browser E2E plus explicit DOM-change and protected-login Chromium scenarios.
+The recorded result is
+[`stand-1.0.0rc1-compatibility.md`](../stand-1.0.0rc1-compatibility.md).
+This does not authorize a C# `v1.0.0` release; D3 requires the GA stand `1.0.0`.
+
 ## Consequences
 
 - The C# repository no longer contains or tests Python source.

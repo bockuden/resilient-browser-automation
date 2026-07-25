@@ -334,17 +334,22 @@ GHCR.
 
 ### Candidate release verification
 
-- [ ] After E–G and C# D1 are complete, create and push `v1.0.0rc1`; verify its
+- [x] After E–G and C# D1 are complete, create and push `v1.0.0rc1`; verify its
   PyPI and GHCR prerelease publication and install wheel/sdist from PyPI before
   releasing `v1.0.0`.
 
 ### C# D2 — after stand 1.0.0rc1, before GA
 
-- [ ] Run a separate compatibility pass against the exactly published
+- Status: complete on 2026-07-25.
+
+- [x] Run a separate compatibility pass against the exactly published
   `1.0.0rc1`, not a local checkout.
-- [ ] Cover success, transient, permanent, DOM change, duplicates, login,
+- [x] Cover success, transient, permanent, DOM change, duplicates, login,
   resume, cancellation, natural end, and concurrent scenarios.
-- [ ] Verify contract use does not depend on Python implementation details.
+- [x] Verify contract use does not depend on Python implementation details.
+
+Evidence: [`docs/stand-1.0.0rc1-compatibility.md`](stand-1.0.0rc1-compatibility.md).
+The exact Compose pin is `1.0.0rc1` until D3 validates GA `1.0.0`.
 
 ### C# D3 — after stand 1.0.0
 
