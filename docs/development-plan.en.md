@@ -353,6 +353,8 @@ The exact Compose pin is `1.0.0rc1` until D3 validates GA `1.0.0`.
 
 ### C# D3 — after stand 1.0.0
 
+Status: validation in progress on 2026-07-26.
+
 - [ ] Pin Compose to exact stand version `1.0.0`, repeat clean-clone/demo/CI,
   then tag the C# repository `v1.0.0`.
 - [ ] Cross-link both release notes: the stand to this production-style consumer

@@ -52,6 +52,17 @@ The recorded result is
 [`stand-1.0.0rc1-compatibility.md`](../stand-1.0.0rc1-compatibility.md).
 This does not authorize a C# `v1.0.0` release; D3 requires the GA stand `1.0.0`.
 
+## Compatibility update: stand 1.0.0
+
+On 2026-07-26, the D3 gate validated the exactly published GA stand `1.0.0`.
+Compose now consumes:
+
+`ghcr.io/bockuden/resilient-automation-test-stand:1.0.0`
+
+The recorded browser E2E and local CI evidence is
+[`stand-1.0.0-compatibility.md`](../stand-1.0.0-compatibility.md). The image is
+pinned by its exact tag; `latest` is not used.
+
 ## Consequences
 
 - The C# repository no longer contains or tests Python source.

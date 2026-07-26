@@ -21,7 +21,7 @@ bounded portfolio project. It does not claim production-scale crawling.
 - Rate limiting is per worker process, not global across multiple machines.
 - The FastAPI stand is deterministic by design and is not a substitute for
   contractual tests against a real product API.
-- Compose intentionally pins stand version `1.0.0rc1`. New stand behavior is not
+- Compose intentionally pins stand version `1.0.0`. New stand behavior is not
   consumed until the image version is changed and this repository's E2E passes.
 
 ## Review Positioning
