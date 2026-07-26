@@ -4,10 +4,24 @@ param(
 )
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
-$dotnet = Join-Path $repoRoot '.dotnet\dotnet.exe'
+$localDotnet = Join-Path $repoRoot '.dotnet\dotnet.exe'
+$configuredDotnet = if ($env:RESILIENT_BROWSER_AUTOMATION_DOTNET_ROOT) {
+    Join-Path $env:RESILIENT_BROWSER_AUTOMATION_DOTNET_ROOT 'dotnet.exe'
+}
 
-if (-not (Test-Path -LiteralPath $dotnet)) {
-    throw "Local .NET SDK was not found at '$dotnet'. Install the SDK selected by global.json."
+if (Test-Path -LiteralPath $localDotnet) {
+    $dotnet = $localDotnet
+}
+elseif ($configuredDotnet -and (Test-Path -LiteralPath $configuredDotnet)) {
+    $dotnet = $configuredDotnet
+}
+else {
+    $systemDotnet = Get-Command dotnet -ErrorAction SilentlyContinue
+    $dotnet = if ($systemDotnet) { $systemDotnet.Source } else { $null }
+}
+
+if (-not $dotnet) {
+    throw "No .NET host was found. Install the SDK selected by global.json, add it to PATH, or set RESILIENT_BROWSER_AUTOMATION_DOTNET_ROOT."
 }
 
 $env:DOTNET_CLI_HOME = Join-Path $repoRoot '.dotnet-cli-home'
@@ -20,4 +34,3 @@ $env:DOTNET_GENERATE_ASPNET_CERTIFICATE = '0'
 
 & $dotnet @Arguments
 exit $LASTEXITCODE
-

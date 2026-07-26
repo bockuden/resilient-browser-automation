@@ -109,9 +109,12 @@ dotnet build --configuration Release
 
 The C# build requires the .NET 10 SDK selected by `global.json`.
 
-On this development checkout, SDK `10.0.302` is installed repository-locally in
-the ignored `.dotnet` directory. PowerShell users can invoke it without changing
-the system PATH:
+Install SDK `10.0.302` (or a compatible patch selected by `global.json`) on the
+system PATH. The PowerShell wrapper prefers a repository-local ignored `.dotnet`
+SDK when present; CI or another SDK location can instead set
+`RESILIENT_BROWSER_AUTOMATION_DOTNET_ROOT`.
+
+PowerShell users can invoke the selected SDK without changing the system PATH:
 
 ```powershell
 .\eng\dotnet.ps1 --version
