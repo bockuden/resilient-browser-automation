@@ -371,3 +371,5 @@ Status: complete on 2026-07-26.
 - [x] Add a live GitHub Actions status badge, .NET 10 and MIT badges to README.
 - [x] Add a colour architecture diagram, an animated recovery flow, and a
   real captured failure-evidence panel to README.
+- [x] Clarify that the C# Compose demo consumes the independently published
+  FastAPI stand image rather than building local Python source.

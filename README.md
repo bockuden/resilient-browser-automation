@@ -79,9 +79,14 @@ flowchart LR
 Dependency direction is inward: domain contracts do not reference Playwright,
 SQLite, hosting, or logging implementations.
 
-## Run the deterministic test site
+## Run the published deterministic test stand
 
 Requirements: Docker with the Compose plugin.
+
+The FastAPI stand is not built from this repository. Compose pulls the exact
+published OCI image `ghcr.io/bockuden/resilient-automation-test-stand:1.0.0`
+from GHCR, which is produced by the stand's independent Python package and
+release pipeline.
 
 ```bash
 docker compose pull demo-site
@@ -89,7 +94,8 @@ docker compose up --detach --wait demo-site
 ```
 
 Then open `http://localhost:8080/catalog`. Health status is available at
-`http://localhost:8080/health`.
+`http://localhost:8080/health`. No local FastAPI checkout, Python installation,
+or package build is required for this C# demo.
 
 Useful deterministic scenarios:
 
