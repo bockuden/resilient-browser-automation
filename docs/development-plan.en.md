@@ -353,9 +353,13 @@ The exact Compose pin is `1.0.0rc1` until D3 validates GA `1.0.0`.
 
 ### C# D3 — after stand 1.0.0
 
-Status: validation in progress on 2026-07-26.
+Status: validation complete on 2026-07-26; the public C# tag and cross-linked
+release notes are pending publication.
 
-- [ ] Pin Compose to exact stand version `1.0.0`, repeat clean-clone/demo/CI,
-  then tag the C# repository `v1.0.0`.
+- [x] Pin Compose to exact stand version `1.0.0`; complete Compose browser E2E,
+  CI-equivalent checks, and a clean-clone restore/build/test validation.
+- [ ] Create and push the C# repository tag `v1.0.0`.
 - [ ] Cross-link both release notes: the stand to this production-style consumer
   proof, and the C# release to the exact tested stand.
+
+Evidence: [`docs/stand-1.0.0-compatibility.md`](stand-1.0.0-compatibility.md).

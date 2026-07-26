@@ -44,8 +44,16 @@ dotnet test --configuration Release --no-restore --no-build --verbosity minimal 
 The test run passed 16 unit tests and 7 integration tests. The Compose stack was
 stopped after the demo.
 
+## Clean-clone validation
+
+A fresh clone of commit `c363b42` used the externally supplied SDK
+`10.0.302` through `RESILIENT_BROWSER_AUTOMATION_DOTNET_ROOT`; no SDK files were
+copied into the repository. Restore, Release build, the same 16 unit and 7
+integration tests, and `docker compose config --quiet` all completed
+successfully with a clean Git status.
+
 ## Release gate
 
-This evidence validates the exact GA stand for C# release preparation. The
-remaining D3 action is the clean-clone validation and then creation of the C#
-`v1.0.0` tag and cross-linked release notes.
+This evidence completes the validation portion of D3 and validates the exact GA
+stand for C# release preparation. Creating and pushing the C# `v1.0.0` tag and
+publishing cross-linked GitHub release notes remain explicit publication actions.
