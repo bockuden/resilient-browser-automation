@@ -363,3 +363,11 @@ release notes are pending publication.
   proof, and the C# release to the exact tested stand.
 
 Evidence: [`docs/stand-1.0.0-compatibility.md`](stand-1.0.0-compatibility.md).
+
+### Portfolio presentation refinement
+
+Status: complete on 2026-07-26.
+
+- [x] Add a live GitHub Actions status badge, .NET 10 and MIT badges to README.
+- [x] Add a colour architecture diagram, an animated recovery flow, and a
+  real captured failure-evidence panel to README.

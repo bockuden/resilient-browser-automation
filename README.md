@@ -1,5 +1,9 @@
 # Resilient Browser Automation
 
+[![Build and test](https://github.com/bockuden/resilient-browser-automation/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/bockuden/resilient-browser-automation/actions/workflows/tests.yml)
+![.NET 10](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet&logoColor=white)
+[![License: MIT](https://img.shields.io/badge/License-MIT-2ea44f.svg)](LICENSE)
+
 A production-style browser automation worker built with C# and .NET 10.
 
 The project demonstrates idempotent job execution, checkpoint-based recovery,
@@ -11,6 +15,28 @@ end-to-end tests against a versioned FastAPI test stand.
 > bounded concurrency, Docker Compose demo, and GitHub Actions proof. Design
 > decisions and implementation history are documented in the
 > [development plan](docs/development-plan.en.md).
+
+## Visible proof
+
+<p align="center">
+  <img src="docs/assets/recovery-flow.gif" alt="Illustrated recovery flow: a failed page creates evidence and resumes from its checkpoint." width="900">
+</p>
+
+The deterministic recovery flow above is reproduced by the Compose demo: a
+terminal page failure creates artifacts, while a resumable failure restarts from
+its last durable checkpoint rather than replaying stored pages.
+
+<p align="center">
+  <img src="docs/assets/architecture-overview.svg" alt="C# worker architecture: job input, Playwright, SQLite, FastAPI test stand, and evidence artifacts." width="1000">
+</p>
+
+<p align="center">
+  <img src="docs/assets/failure-evidence.png" alt="Captured failure evidence: error metadata, screenshot, HTML and trace next to a real browser screenshot." width="900">
+</p>
+
+The evidence panel uses a real permanent-failure screenshot captured by the
+worker. The demo writes the same redacted `error.json`, `page.html`,
+`screenshot.png`, and `trace.zip` bundle on every deterministic run.
 
 ## Why this project
 
