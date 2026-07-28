@@ -38,5 +38,6 @@ surfaces: Level 1 pagination, Level 2 transient recovery, Level 3 stable DOM
 locators/duplicates/protected login, and bonus resume/cancellation evidence.
 
 The corresponding pinned-pair record is maintained in
-[compatibility-matrix.md](compatibility-matrix.md). GitHub Actions must rerun
-after this consumer change is published.
+[compatibility-matrix.md](compatibility-matrix.md). Both `dotnet-fast` and
+`browser-e2e` passed in
+[GitHub Actions run 30387683418](https://github.com/bockuden/resilient-browser-automation/actions/runs/30387683418).

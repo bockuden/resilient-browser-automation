@@ -376,8 +376,9 @@ Status: complete on 2026-07-26.
 
 ### Phase D — C# reference-consumer link
 
-Status: local compatibility validation complete on 2026-07-28; the GitHub
-Actions confirmation is pending publication of this consumer change.
+Status: complete on 2026-07-28. Local compatibility validation and
+[GitHub Actions run 30387683418](https://github.com/bockuden/resilient-browser-automation/actions/runs/30387683418)
+passed against exact Test Stand `1.1.3`.
 
 - [x] Add direct, role-specific links between the reusable Test Stand and this
   production-style C# consumer.
@@ -385,3 +386,15 @@ Actions confirmation is pending publication of this consumer change.
   `1.1.3`, never `latest`.
 - [x] Record the worker/Test Stand pair, challenge coverage, evidence, and the
   public-contract change rule in `docs/compatibility-matrix.md`.
+
+### C# v1.0.0 release preparation
+
+Status: release notes and launch copy prepared; tag and GitHub Release are not
+published yet.
+
+- [x] Add a changelog and reproducible `v1.0.0` release notes with exact
+  Test Stand and CI evidence.
+- [x] Prepare concise Russian and English launch copy without unsupported
+  production, CAPTCHA, anti-bot, or SLA claims.
+- [ ] Create and push tag `v1.0.0`, then publish the GitHub Release from the
+  prepared notes.

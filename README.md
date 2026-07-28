@@ -1,6 +1,7 @@
 # Resilient Browser Automation
 
 [![Build and test](https://github.com/bockuden/resilient-browser-automation/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/bockuden/resilient-browser-automation/actions/workflows/tests.yml)
+[![GitHub release](https://img.shields.io/github/v/release/bockuden/resilient-browser-automation?display_name=tag)](https://github.com/bockuden/resilient-browser-automation/releases)
 ![.NET 10](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet&logoColor=white)
 [![License: MIT](https://img.shields.io/badge/License-MIT-2ea44f.svg)](LICENSE)
 
@@ -192,6 +193,8 @@ Release-oriented documentation:
 | [Limitations](docs/limitations.md) | Explicit non-goals and review positioning |
 | [Release checklist](docs/release-checklist.md) | Checks before tagging `v1.0.0` |
 | [Compatibility matrix](docs/compatibility-matrix.md) | Exact Test Stand releases validated by this consumer |
+| [v1.0.0 release notes](docs/releases/v1.0.0.md) | Stable release behavior, evidence, and known boundaries |
+| [Changelog](CHANGELOG.md) | Versioned user-visible changes |
 
 ## Run the worker
 
