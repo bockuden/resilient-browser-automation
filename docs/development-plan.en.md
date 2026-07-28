@@ -373,3 +373,15 @@ Status: complete on 2026-07-26.
   real captured failure-evidence panel to README.
 - [x] Clarify that the C# Compose demo consumes the independently published
   FastAPI stand image rather than building local Python source.
+
+### Phase D — C# reference-consumer link
+
+Status: local compatibility validation complete on 2026-07-28; the GitHub
+Actions confirmation is pending publication of this consumer change.
+
+- [x] Add direct, role-specific links between the reusable Test Stand and this
+  production-style C# consumer.
+- [x] Pin the C# Compose and browser-E2E configuration to exact Test Stand
+  `1.1.3`, never `latest`.
+- [x] Record the worker/Test Stand pair, challenge coverage, evidence, and the
+  public-contract change rule in `docs/compatibility-matrix.md`.

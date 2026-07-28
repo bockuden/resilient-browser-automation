@@ -27,7 +27,7 @@ flowchart LR
 | `Automation.Worker` | Host, dependency injection, config, job intake, concurrency | Domain rules |
 
 The deterministic target is an external dependency pinned in Compose as
-`ghcr.io/bockuden/resilient-automation-test-stand:1.0.0`. Its source, API
+`ghcr.io/bockuden/resilient-automation-test-stand:1.1.3`. Its source, API
 contract, package tests, and release workflow live in the
 [stand repository](https://github.com/bockuden/resilient-automation-test-stand).
 The worker repository owns compatibility E2E; the stand repository owns its

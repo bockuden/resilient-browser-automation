@@ -63,6 +63,18 @@ The recorded browser E2E and local CI evidence is
 [`stand-1.0.0-compatibility.md`](../stand-1.0.0-compatibility.md). The image is
 pinned by its exact tag; `latest` is not used.
 
+## Compatibility update: stand 1.1.3
+
+On 2026-07-28, the C# reference consumer validated the independently released
+stand `1.1.3` through the exact Compose image:
+
+`ghcr.io/bockuden/resilient-automation-test-stand:1.1.3`
+
+The full Chromium Compose demo passed and is recorded in
+[`stand-1.1.3-compatibility.md`](../stand-1.1.3-compatibility.md). The
+version-pair history and contract-change gate are maintained in
+[`compatibility-matrix.md`](../compatibility-matrix.md).
+
 ## Consequences
 
 - The C# repository no longer contains or tests Python source.

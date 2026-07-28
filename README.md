@@ -83,8 +83,10 @@ SQLite, hosting, or logging implementations.
 
 Requirements: Docker with the Compose plugin.
 
+The worker is validated against the independently released
+[Resilient Automation Test Stand](https://github.com/bockuden/resilient-automation-test-stand).
 The FastAPI stand is not built from this repository. Compose pulls the exact
-published OCI image `ghcr.io/bockuden/resilient-automation-test-stand:1.0.0`
+published OCI image `ghcr.io/bockuden/resilient-automation-test-stand:1.1.3`
 from GHCR, which is produced by the stand's independent Python package and
 release pipeline.
 
@@ -113,7 +115,7 @@ Use a unique `run_id` query value to isolate counters between test cases. Reset
 all counters with `POST /admin/reset`.
 
 Compose pins
-`ghcr.io/bockuden/resilient-automation-test-stand:1.0.0`. The stand has an
+`ghcr.io/bockuden/resilient-automation-test-stand:1.1.3`. The stand has an
 independent source repository, contract, tests, and release cycle at
 [bockuden/resilient-automation-test-stand](https://github.com/bockuden/resilient-automation-test-stand).
 
@@ -158,6 +160,8 @@ PowerShell users can invoke the selected SDK without changing the system PATH:
 The FastAPI stand's package, CLI, API contract, and release instructions live in
 its [independent repository](https://github.com/bockuden/resilient-automation-test-stand).
 The extraction is recorded in [ADR 0003](docs/adr/0003-extract-fastapi-test-stand.md).
+The exact released pair and its validation evidence are listed in the
+[compatibility matrix](docs/compatibility-matrix.md).
 
 ## CI and release proof
 
@@ -166,6 +170,9 @@ GitHub Actions runs two read-only jobs:
 - fast .NET restore, build, analyzer/format check, unit tests, and integration tests;
 - browser E2E with only Chromium and required Linux dependencies installed,
   using the pinned external stand image.
+
+The `browser-e2e` job resolves the exact image from `docker-compose.yml`; it
+never validates consumer compatibility against `latest`.
 
 The stand repository independently tests Python 3.11–3.13, builds wheel/sdist,
 checks the OpenAPI snapshot, and verifies its production image before release.
@@ -184,6 +191,7 @@ Release-oriented documentation:
 | [Troubleshooting](docs/troubleshooting.md) | Common local and Docker failure modes |
 | [Limitations](docs/limitations.md) | Explicit non-goals and review positioning |
 | [Release checklist](docs/release-checklist.md) | Checks before tagging `v1.0.0` |
+| [Compatibility matrix](docs/compatibility-matrix.md) | Exact Test Stand releases validated by this consumer |
 
 ## Run the worker
 
