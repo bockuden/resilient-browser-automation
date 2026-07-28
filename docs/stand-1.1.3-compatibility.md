@@ -39,5 +39,5 @@ locators/duplicates/protected login, and bonus resume/cancellation evidence.
 
 The corresponding pinned-pair record is maintained in
 [compatibility-matrix.md](compatibility-matrix.md). Both `dotnet-fast` and
-`browser-e2e` passed in
-[GitHub Actions run 30387683418](https://github.com/bockuden/resilient-browser-automation/actions/runs/30387683418).
+`browser-e2e` passed for the tagged release commit in
+[GitHub Actions run 30397596555](https://github.com/bockuden/resilient-browser-automation/actions/runs/30397596555).

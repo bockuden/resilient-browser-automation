@@ -24,7 +24,7 @@ All notable changes to Resilient Browser Automation are documented here.
 - The release pins Test Stand `1.1.3` exactly; compatibility validation never
   uses `latest`.
 - Validation evidence: [Test Stand 1.1.3 compatibility](docs/stand-1.1.3-compatibility.md).
-- Successful CI: [GitHub Actions run 30387683418](https://github.com/bockuden/resilient-browser-automation/actions/runs/30387683418).
+- Successful release CI: [GitHub Actions run 30397596555](https://github.com/bockuden/resilient-browser-automation/actions/runs/30397596555).
 
 ### Scope
 

@@ -353,12 +353,12 @@ The exact Compose pin is `1.0.0rc1` until D3 validates GA `1.0.0`.
 
 ### C# D3 — after stand 1.0.0
 
-Status: validation complete on 2026-07-26; the public C# tag and cross-linked
-release notes are pending publication.
+Status: validation complete on 2026-07-26; C# `v1.0.0` published on 2026-07-28.
 
 - [x] Pin Compose to exact stand version `1.0.0`; complete Compose browser E2E,
   CI-equivalent checks, and a clean-clone restore/build/test validation.
-- [ ] Create and push the C# repository tag `v1.0.0`.
+- [x] Create and push the C# repository tag `v1.0.0` and publish the
+  [GitHub Release](https://github.com/bockuden/resilient-browser-automation/releases/tag/v1.0.0).
 - [ ] Cross-link both release notes: the stand to this production-style consumer
   proof, and the C# release to the exact tested stand.
 
@@ -389,12 +389,11 @@ passed against exact Test Stand `1.1.3`.
 
 ### C# v1.0.0 release preparation
 
-Status: release notes and launch copy prepared; tag and GitHub Release are not
-published yet.
+Status: complete on 2026-07-28; tag and GitHub Release are published.
 
 - [x] Add a changelog and reproducible `v1.0.0` release notes with exact
   Test Stand and CI evidence.
 - [x] Prepare concise Russian and English launch copy without unsupported
   production, CAPTCHA, anti-bot, or SLA claims.
-- [ ] Create and push tag `v1.0.0`, then publish the GitHub Release from the
-  prepared notes.
+- [x] Create and push tag `v1.0.0`, then publish the GitHub Release from the
+  prepared notes after successful release CI run `30397596555`.

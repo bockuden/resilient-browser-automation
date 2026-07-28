@@ -7,7 +7,7 @@ the local demo or the `browser-e2e` GitHub Actions job.
 
 | Worker revision | Exact Test Stand release | Validation date | Evidence / CI | Passed challenge coverage |
 | --- | --- | --- | --- | --- |
-| `main` at `3dceb2b` (release candidate for worker `v1.0.0`) | `1.1.3` / `ghcr.io/bockuden/resilient-automation-test-stand:1.1.3` | 2026-07-28 | Full local Compose Chromium E2E, 172 s; [GitHub Actions run 30387683418](https://github.com/bockuden/resilient-browser-automation/actions/runs/30387683418) | L1 happy-path pagination; L2 transient `503` + `Retry-After`; L3 protected login, DOM change and duplicates; bonus checkpoint resume, cancellation and terminal evidence |
+| [`v1.0.0`](https://github.com/bockuden/resilient-browser-automation/releases/tag/v1.0.0) at `01854c8` | `1.1.3` / `ghcr.io/bockuden/resilient-automation-test-stand:1.1.3` | 2026-07-28 | Full local Compose Chromium E2E, 172 s; [release CI run 30397596555](https://github.com/bockuden/resilient-browser-automation/actions/runs/30397596555) | L1 happy-path pagination; L2 transient `503` + `Retry-After`; L3 protected login, DOM change and duplicates; bonus checkpoint resume, cancellation and terminal evidence |
 | `main` at `85b8435` | `1.0.0` / `ghcr.io/bockuden/resilient-automation-test-stand:1.0.0` | 2026-07-26 | [Compatibility evidence](stand-1.0.0-compatibility.md); [GitHub Actions run 30196994593](https://github.com/bockuden/resilient-browser-automation/actions/runs/30196994593) | Happy path, transient and permanent failures, duplicates, concurrency, resume, cancellation and natural end |
 
 The current evidence for `1.1.3` is recorded in
