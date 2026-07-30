@@ -422,8 +422,11 @@ GitHub private-reporting repository setting remains pending.
   the complete flow passed with 9 completed jobs, 1 expected cancellation,
   1 expected failure with evidence, and 117 persisted items while the default
   Compose pin remained `1.1.3`.
-- [ ] After push, confirm GitHub accepts all workflow and issue-form schemas and
-  manually dispatch the first hosted canary run.
+- [x] After push, confirm GitHub accepts the new workflows and issue forms.
+  [Build and test run 30528616949](https://github.com/bockuden/resilient-browser-automation/actions/runs/30528616949)
+  passed, and the first successful hosted
+  [canary run 30528634764](https://github.com/bockuden/resilient-browser-automation/actions/runs/30528634764)
+  completed against latest stable Test Stand `1.1.5`.
 - [x] Diagnose the first hosted canary run `30528349363`: the Test Stand
   contract was compatible, but the Linux bind-mounted demo directory was not
   writable by the non-root worker. Prepare only that generated directory on
