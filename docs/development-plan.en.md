@@ -397,3 +397,34 @@ Status: complete on 2026-07-28; tag and GitHub Release are published.
   production, CAPTCHA, anti-bot, or SLA claims.
 - [x] Create and push tag `v1.0.0`, then publish the GitHub Release from the
   prepared notes after successful release CI run `30397596555`.
+
+## 11. Post-v1.0 repository operations
+
+Status: local implementation and verification complete on 2026-07-30; the
+GitHub private-reporting repository setting remains pending.
+
+- [x] Put one copy-paste Compose scenario that starts the published stand and
+  worker within the first 50 lines of README.
+- [x] Reduce README from 328 lines and move detailed execution, configuration,
+  retry, evidence, and concurrency behavior to `docs/usage.md`.
+- [x] Add root `CONTRIBUTING.md`, root `SECURITY.md`, and structured bug,
+  feature, security, and troubleshooting issue routes.
+- [x] Add a SemVer tag workflow that gates worker-image publication, SBOM
+  generation, and GitHub Release creation on fast tests and full Compose E2E.
+- [x] Keep the default Test Stand pin at exact version `1.1.3` while adding a
+  weekly/manual canary against the latest published stable stand release.
+- [x] Ensure the canary uses an environment override and never edits or
+  advances the stable Compose pin.
+- [x] Validate YAML syntax, Compose interpolation, the repository-local
+  .NET `10.0.302` build with zero warnings, 16 unit tests, 7 integration tests,
+  and the full pinned Compose demo.
+- [x] Manually execute the canary path against latest stable Test Stand `1.1.5`;
+  the complete flow passed with 9 completed jobs, 1 expected cancellation,
+  1 expected failure with evidence, and 117 persisted items while the default
+  Compose pin remained `1.1.3`.
+- [ ] After push, confirm GitHub accepts all workflow and issue-form schemas and
+  manually dispatch the first hosted canary run.
+- [ ] On the next prerelease tag, verify the complete hosted publication chain:
+  E2E gate, versioned GHCR worker image, SPDX JSON SBOM asset, and prerelease.
+- [ ] Enable GitHub Private Vulnerability Reporting in repository settings;
+  until then, retain the no-details public security-contact fallback.

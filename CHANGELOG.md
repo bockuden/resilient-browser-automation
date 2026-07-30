@@ -2,6 +2,26 @@
 
 All notable changes to Resilient Browser Automation are documented here.
 
+## Unreleased
+
+### Added
+
+- A SemVer tag release workflow gated by fast tests and full Compose E2E that
+  publishes the worker image, an SPDX JSON SBOM, and a GitHub Release.
+- A weekly/manual compatibility canary against the latest published stable Test
+  Stand release without automatically changing the stable Compose pin.
+- Root contribution and security policies plus structured bug, feature, and
+  security-contact issue forms.
+- A focused operations guide for Compose, host execution, configuration,
+  browser behavior, observability, and exit codes.
+
+### Changed
+
+- Reduced README from 328 to 167 lines and placed the complete copy-paste demo
+  near the top.
+- Upgraded cache and artifact Actions to their Node.js 24-compatible major
+  versions.
+
 ## 1.0.0 - 2026-07-28
 
 ### Added

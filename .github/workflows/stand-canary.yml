@@ -1,0 +1,61 @@
+name: Test Stand canary
+
+on:
+  schedule:
+    - cron: "17 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: test-stand-canary
+  cancel-in-progress: false
+
+jobs:
+  latest-released-stand:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Resolve latest published Test Stand release
+        id: stand
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          release_tag="$(gh api repos/bockuden/resilient-automation-test-stand/releases/latest --jq .tag_name)"
+          version="${release_tag#v}"
+          if [[ ! "${version}" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Latest release tag is not supported SemVer: ${release_tag}"
+            exit 1
+          fi
+          image="ghcr.io/bockuden/resilient-automation-test-stand:${version}"
+          echo "release_tag=${release_tag}" >> "${GITHUB_OUTPUT}"
+          echo "image=${image}" >> "${GITHUB_OUTPUT}"
+          echo "Testing ${image}" >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Run full compatibility canary
+        shell: pwsh
+        env:
+          TEST_STAND_IMAGE: ${{ steps.stand.outputs.image }}
+        run: ./eng/demo-compose.ps1
+
+      - name: Record stable-pin policy
+        if: always()
+        shell: bash
+        run: |
+          echo "Stable Compose pin: ghcr.io/bockuden/resilient-automation-test-stand:1.1.3" >> "${GITHUB_STEP_SUMMARY}"
+          echo "Canary image: ${{ steps.stand.outputs.image }}" >> "${GITHUB_STEP_SUMMARY}"
+          echo "This workflow never modifies the stable pin." >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload canary evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: stand-canary-${{ steps.stand.outputs.release_tag }}
+          path: artifacts/docker-demo/
+          if-no-files-found: warn
+          retention-days: 7

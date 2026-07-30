@@ -1,6 +1,6 @@
 # Release Checklist
 
-Use this checklist before tagging `v1.0.0`.
+Use this checklist before creating a stable or prerelease SemVer tag.
 
 - Clean clone on Windows.
 - Clean clone on Linux or a Linux container path.
@@ -25,3 +25,8 @@ Use this checklist before tagging `v1.0.0`.
 - The Russian plan is absent from `git ls-files` and ignored by
   `.git/info/exclude`.
 - README and docs do not claim anti-bot behavior or production-scale crawling.
+- The tag points to the exact reviewed commit intended for publication.
+- The tag-based workflow completes full Compose E2E before publishing the
+  worker image, SBOM, and GitHub Release.
+- Published image tags are exact versions; release validation never uses
+  `latest`.

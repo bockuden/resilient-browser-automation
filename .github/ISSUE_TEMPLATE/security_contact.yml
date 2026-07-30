@@ -1,0 +1,33 @@
+name: Security contact request
+description: Request a private reporting channel without disclosing vulnerability details
+title: "[Security contact]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This issue is public. Do not include vulnerability details,
+        reproduction steps, credentials, logs, screenshots, traces, HTML, or
+        database content. Use this form only when GitHub private vulnerability
+        reporting is unavailable.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - Worker input or configuration
+        - Browser automation or artifacts
+        - SQLite persistence
+        - Docker image or Compose
+        - GitHub Actions or release supply chain
+        - Other
+    validations:
+      required: true
+  - type: checkboxes
+    id: acknowledgement
+    attributes:
+      label: Public issue acknowledgement
+      options:
+        - label: I have not included vulnerability details or sensitive data.
+          required: true
+        - label: I am requesting instructions for a private report.
+          required: true

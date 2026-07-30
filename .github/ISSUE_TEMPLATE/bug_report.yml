@@ -1,0 +1,76 @@
+name: Bug report
+description: Report reproducible incorrect worker, persistence, or browser behavior
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a problem. Remove credentials and sensitive page
+        content before attaching logs or failure evidence.
+  - type: textarea
+    id: description
+    attributes:
+      label: Problem
+      description: What happened, and what impact did it have?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Provide the smallest deterministic sequence, job input, and scenario.
+      placeholder: |
+        1. Start Test Stand version ...
+        2. Run ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: input
+    id: worker-version
+    attributes:
+      label: Worker version or commit
+      placeholder: v1.0.0 or commit SHA
+    validations:
+      required: true
+  - type: input
+    id: stand-version
+    attributes:
+      label: Test Stand image
+      placeholder: ghcr.io/bockuden/resilient-automation-test-stand:1.1.3
+    validations:
+      required: true
+  - type: dropdown
+    id: execution
+    attributes:
+      label: Execution environment
+      options:
+        - Docker Compose
+        - Windows host
+        - Linux host
+        - GitHub Actions
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Redacted logs or evidence
+      description: Attach only data that is safe to publish.
+      render: text
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Safety checks
+      options:
+        - label: I removed credentials, tokens, cookies, and sensitive page content.
+          required: true
+        - label: This is not a private security vulnerability.
+          required: true

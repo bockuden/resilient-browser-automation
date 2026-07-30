@@ -1,0 +1,33 @@
+name: Feature request
+description: Propose a focused improvement to the reference worker
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+      description: Describe the automation or engineering problem, not only a preferred implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Explain the observable behavior and affected execution invariant.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope
+      options:
+        - label: I understand this project is not an anti-bot, CAPTCHA bypass, proxy rotation, or distributed crawling framework.
+          required: true
+        - label: I considered test, documentation, compatibility, and security impact.
+          required: true

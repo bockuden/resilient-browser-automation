@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security policy
+    url: https://github.com/bockuden/resilient-browser-automation/blob/main/SECURITY.md
+    about: Read the private-reporting policy before sharing any security information.
+  - name: Usage and troubleshooting
+    url: https://github.com/bockuden/resilient-browser-automation/blob/main/docs/troubleshooting.md
+    about: Check known local, Docker, Playwright, and SQLite failure modes.

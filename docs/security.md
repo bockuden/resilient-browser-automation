@@ -22,14 +22,20 @@ route artifacts to restricted storage and apply retention controls.
 
 ## CI Permissions
 
-GitHub Actions use read-only repository permissions:
+Regular build/test and scheduled compatibility workflows use read-only
+repository permissions:
 
 ```yaml
 permissions:
   contents: read
 ```
 
-The workflow caches NuGet packages only. Browser binaries, profiles, traces,
+The tag-based release workflow keeps read-only permissions during verification.
+Only its dependent publish job receives `contents: write` and `packages: write`
+to publish the GHCR worker image, attach its SBOM, and create the GitHub
+Release.
+
+Workflows cache NuGet packages only. Browser binaries, profiles, traces,
 databases, and generated artifacts are not cached.
 
 ## Containers
