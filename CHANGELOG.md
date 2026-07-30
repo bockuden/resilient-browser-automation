@@ -22,6 +22,12 @@ All notable changes to Resilient Browser Automation are documented here.
 - Upgraded cache and artifact Actions to their Node.js 24-compatible major
   versions.
 
+### Fixed
+
+- Prepare the ignored Compose demo data directory for the non-root worker on
+  Unix hosts so SQLite and failure evidence can be written through the bind
+  mount.
+
 ## 1.0.0 - 2026-07-28
 
 ### Added

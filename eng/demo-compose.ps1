@@ -7,6 +7,8 @@ $repoRoot = Split-Path -Parent $PSScriptRoot
 $dataPath = Join-Path $repoRoot "artifacts/docker-demo"
 $resolvedRoot = [System.IO.Path]::GetFullPath($repoRoot)
 $resolvedData = [System.IO.Path]::GetFullPath($dataPath)
+$isWindowsPlatform = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform(
+    [System.Runtime.InteropServices.OSPlatform]::Windows)
 
 if (-not $resolvedData.StartsWith($resolvedRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
     throw "Refusing to reset a path outside the repository: $resolvedData"
@@ -50,11 +52,36 @@ function Invoke-CancellationDemo {
     }
 }
 
+function Set-UnixDemoDataPermissions {
+    param(
+        [string]$Path,
+        [switch]$Recursive
+    )
+
+    if ($isWindowsPlatform) {
+        return
+    }
+
+    $arguments = if ($Recursive) {
+        @("-R", "a+rwX", "--", $Path)
+    }
+    else {
+        @("a+rwx", "--", $Path)
+    }
+
+    & chmod @arguments
+    if ($LASTEXITCODE -ne 0) {
+        throw "Unable to make the generated demo data path writable: $Path"
+    }
+}
+
 if (Test-Path -LiteralPath $resolvedData) {
+    Set-UnixDemoDataPermissions -Path $resolvedData -Recursive
     Remove-Item -LiteralPath $resolvedData -Recurse -Force
 }
 
 New-Item -ItemType Directory -Path $resolvedData | Out-Null
+Set-UnixDemoDataPermissions -Path $resolvedData
 
 try {
     Invoke-DemoCommand "Pull deterministic FastAPI stand" @("compose", "pull", "demo-site")

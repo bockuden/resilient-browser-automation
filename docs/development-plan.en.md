@@ -424,6 +424,10 @@ GitHub private-reporting repository setting remains pending.
   Compose pin remained `1.1.3`.
 - [ ] After push, confirm GitHub accepts all workflow and issue-form schemas and
   manually dispatch the first hosted canary run.
+- [x] Diagnose the first hosted canary run `30528349363`: the Test Stand
+  contract was compatible, but the Linux bind-mounted demo directory was not
+  writable by the non-root worker. Prepare only that generated directory on
+  Unix while keeping the container non-root.
 - [ ] On the next prerelease tag, verify the complete hosted publication chain:
   E2E gate, versioned GHCR worker image, SPDX JSON SBOM asset, and prerelease.
 - [ ] Enable GitHub Private Vulnerability Reporting in repository settings;
