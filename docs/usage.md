@@ -55,7 +55,7 @@ This repository does not build or import its Python sources. By default,
 Compose pulls the exact compatibility-tested image:
 
 ```text
-ghcr.io/bockuden/resilient-automation-test-stand:1.1.3
+ghcr.io/bockuden/resilient-automation-test-stand:1.1.5
 ```
 
 Start only the target:

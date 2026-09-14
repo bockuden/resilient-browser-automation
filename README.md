@@ -21,7 +21,6 @@ required.
 ```powershell
 git clone https://github.com/bockuden/resilient-browser-automation.git
 cd resilient-browser-automation
-git checkout v1.0.0
 .\eng\demo-compose.ps1
 ```
 
@@ -91,9 +90,11 @@ execution sequence.
 
 ## Release and Compatibility Proof
 
+The current Compose default is the exact released Test Stand image
+`ghcr.io/bockuden/resilient-automation-test-stand:1.1.5`, never `latest`.
 [`v1.0.0`](https://github.com/bockuden/resilient-browser-automation/releases/tag/v1.0.0)
-is validated against the exact released image
-`ghcr.io/bockuden/resilient-automation-test-stand:1.1.3`, never `latest`.
+was validated against the exact released image
+`ghcr.io/bockuden/resilient-automation-test-stand:1.1.3`.
 The tagged release passed build, analyzers, unit tests, integration tests, and
 the complete Chromium recovery flow in
 [GitHub Actions](https://github.com/bockuden/resilient-browser-automation/actions/runs/30397596555).

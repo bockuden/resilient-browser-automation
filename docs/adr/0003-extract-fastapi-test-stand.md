@@ -75,6 +75,18 @@ The full Chromium Compose demo passed and is recorded in
 version-pair history and contract-change gate are maintained in
 [`compatibility-matrix.md`](../compatibility-matrix.md).
 
+## Compatibility update: stand 1.1.5
+
+On 2026-07-30, the hosted Test Stand canary validated the independently
+released stand `1.1.5` through the exact Compose image:
+
+`ghcr.io/bockuden/resilient-automation-test-stand:1.1.5`
+
+The full Chromium Compose demo passed and is recorded in
+[`stand-1.1.5-compatibility.md`](../stand-1.1.5-compatibility.md). Compose now
+uses this public release as the default pinned Test Stand image; `latest` is
+still not consumed by stable validation.
+
 ## Consequences
 
 - The C# repository no longer contains or tests Python source.

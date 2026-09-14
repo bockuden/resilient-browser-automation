@@ -44,7 +44,7 @@ body:
     id: stand-version
     attributes:
       label: Test Stand image
-      placeholder: ghcr.io/bockuden/resilient-automation-test-stand:1.1.3
+      placeholder: ghcr.io/bockuden/resilient-automation-test-stand:1.1.5
     validations:
       required: true
   - type: dropdown

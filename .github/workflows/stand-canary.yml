@@ -47,7 +47,7 @@ jobs:
         if: always()
         shell: bash
         run: |
-          echo "Stable Compose pin: ghcr.io/bockuden/resilient-automation-test-stand:1.1.3" >> "${GITHUB_STEP_SUMMARY}"
+          echo "Stable Compose pin: ghcr.io/bockuden/resilient-automation-test-stand:1.1.5" >> "${GITHUB_STEP_SUMMARY}"
           echo "Canary image: ${{ steps.stand.outputs.image }}" >> "${GITHUB_STEP_SUMMARY}"
           echo "This workflow never modifies the stable pin." >> "${GITHUB_STEP_SUMMARY}"
 

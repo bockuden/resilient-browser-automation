@@ -411,7 +411,7 @@ GitHub private-reporting repository setting remains pending.
   feature, security, and troubleshooting issue routes.
 - [x] Add a SemVer tag workflow that gates worker-image publication, SBOM
   generation, and GitHub Release creation on fast tests and full Compose E2E.
-- [x] Keep the default Test Stand pin at exact version `1.1.3` while adding a
+- [x] Keep the default Test Stand pin at an exact public release while adding a
   weekly/manual canary against the latest published stable stand release.
 - [x] Ensure the canary uses an environment override and never edits or
   advances the stable Compose pin.
@@ -420,13 +420,14 @@ GitHub private-reporting repository setting remains pending.
   and the full pinned Compose demo.
 - [x] Manually execute the canary path against latest stable Test Stand `1.1.5`;
   the complete flow passed with 9 completed jobs, 1 expected cancellation,
-  1 expected failure with evidence, and 117 persisted items while the default
-  Compose pin remained `1.1.3`.
+  1 expected failure with evidence, and 117 persisted items.
 - [x] After push, confirm GitHub accepts the new workflows and issue forms.
   [Build and test run 30528616949](https://github.com/bockuden/resilient-browser-automation/actions/runs/30528616949)
   passed, and the first successful hosted
   [canary run 30528634764](https://github.com/bockuden/resilient-browser-automation/actions/runs/30528634764)
   completed against latest stable Test Stand `1.1.5`.
+- [x] Advance the stable Compose default from `1.1.3` to the public Test Stand
+  `1.1.5` image after canary compatibility evidence.
 - [x] Diagnose the first hosted canary run `30528349363`: the Test Stand
   contract was compatible, but the Linux bind-mounted demo directory was not
   writable by the non-root worker. Prepare only that generated directory on

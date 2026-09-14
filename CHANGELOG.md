@@ -17,6 +17,8 @@ All notable changes to Resilient Browser Automation are documented here.
 
 ### Changed
 
+- Advanced the default Compose Test Stand pin to the independently released
+  `1.1.5` image after compatibility canary validation.
 - Reduced README from 328 to 167 lines and placed the complete copy-paste demo
   near the top.
 - Upgraded cache and artifact Actions to their Node.js 24-compatible major

@@ -42,7 +42,7 @@ databases, and generated artifacts are not cached.
 
 The worker Docker image runs as the non-root `app` user. SQLite and artifacts
 are written through a mounted `/data` volume. Compose pins the external test
-stand to version `1.1.3`; version updates require a reviewed Compose change and
+stand to version `1.1.5`; version updates require a reviewed Compose change and
 a complete browser E2E run.
 
 On Unix hosts, the demo script makes only the ignored, generated
