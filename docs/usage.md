@@ -11,7 +11,7 @@ the Compose plugin. It builds the worker image with .NET 10 and downloads the
 published Test Stand image, so neither a host .NET SDK nor Python is required.
 
 Host execution requires the .NET 10 SDK selected by `global.json`. Install SDK
-`10.0.302` or a compatible patch. The PowerShell wrapper prefers the
+`10.0.302` or a newer .NET 10 feature band. The PowerShell wrapper prefers the
 repository-local ignored `.dotnet` SDK when present; CI or another SDK location
 can instead set `RESILIENT_BROWSER_AUTOMATION_DOTNET_ROOT`.
 
