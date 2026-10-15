@@ -6,6 +6,7 @@ public sealed class WorkerRunSummary
     private int rejectedJobs;
     private int failedJobs;
     private int cancelledJobs;
+    private int retriesScheduled;
 
     public int CompletedJobs => Volatile.Read(ref completedJobs);
 
@@ -14,6 +15,8 @@ public sealed class WorkerRunSummary
     public int FailedJobs => Volatile.Read(ref failedJobs);
 
     public int CancelledJobs => Volatile.Read(ref cancelledJobs);
+
+    public int RetriesScheduled => Volatile.Read(ref retriesScheduled);
 
     public WorkerExitCode ExitCode => FailedJobs > 0
         ? WorkerExitCode.Failed
@@ -30,4 +33,6 @@ public sealed class WorkerRunSummary
     public void MarkFailed() => Interlocked.Increment(ref failedJobs);
 
     public void MarkCancelled() => Interlocked.Increment(ref cancelledJobs);
+
+    public void MarkRetryScheduled() => Interlocked.Increment(ref retriesScheduled);
 }

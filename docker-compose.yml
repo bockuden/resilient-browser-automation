@@ -38,7 +38,9 @@ services:
       Automation__Artifacts__RootPath: "/data/artifacts"
     volumes:
       - ./samples:/app/samples:ro
-      - ./artifacts/docker-demo:/data
+      - type: bind
+        source: ${DEMO_DATA_PATH:-./artifacts/docker-demo}
+        target: /data
     command:
       - --jobs
       - /app/samples/jobs.compose.success.jsonl
@@ -49,7 +51,10 @@ services:
     profiles:
       - demo
     volumes:
-      - ./artifacts/docker-demo:/data:ro
+      - type: bind
+        source: ${DEMO_DATA_PATH:-./artifacts/docker-demo}
+        target: /data
+        read_only: true
     command:
       - python
       - -c

@@ -3,10 +3,13 @@ using Microsoft.Extensions.Logging;
 
 namespace Automation.Worker.Services;
 
-public sealed class LoggingRetryObserver(ILogger<LoggingRetryObserver> logger) : IRetryObserver
+public sealed class LoggingRetryObserver(
+    ILogger<LoggingRetryObserver> logger,
+    WorkerRunSummary summary) : IRetryObserver
 {
     public void OnRetry(RetryDecision decision)
     {
+        summary.MarkRetryScheduled();
         logger.LogWarning(
             new EventId(2001, "RetryScheduled"),
             "Retry {NextAttempt} scheduled after {DelayMilliseconds} ms. Reason: {Reason}. Remaining budget: {RemainingBudgetMilliseconds} ms.",
