@@ -1,18 +1,34 @@
 param(
-    [switch]$KeepRunning
+    [switch]$KeepRunning,
+    [switch]$IncludeRateLimitScenario,
+    [string]$DataPath = "artifacts/docker-demo"
 )
 
 $ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent $PSScriptRoot
-$dataPath = Join-Path $repoRoot "artifacts/docker-demo"
+$dataPath = Join-Path $repoRoot $DataPath
 $resolvedRoot = [System.IO.Path]::GetFullPath($repoRoot)
+$resolvedArtifactsRoot = [System.IO.Path]::GetFullPath((Join-Path $repoRoot "artifacts"))
 $resolvedData = [System.IO.Path]::GetFullPath($dataPath)
 $isWindowsPlatform = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform(
     [System.Runtime.InteropServices.OSPlatform]::Windows)
 
-if (-not $resolvedData.StartsWith($resolvedRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
-    throw "Refusing to reset a path outside the repository: $resolvedData"
+if ($IncludeRateLimitScenario) {
+    if ($env:TEST_STAND_IMAGE -notmatch ':(\d+\.\d+\.\d+)$' -or
+        [version]$Matches[1] -lt [version]'1.2.0') {
+        throw "The rate-limit scenario requires TEST_STAND_IMAGE pinned to version 1.2.0 or newer."
+    }
 }
+
+if (-not $resolvedData.StartsWith(
+        "$resolvedArtifactsRoot$([System.IO.Path]::DirectorySeparatorChar)",
+        [System.StringComparison]::OrdinalIgnoreCase)) {
+    throw "Refusing to reset a path outside the artifacts directory: $resolvedData"
+}
+
+$relativeDataPath = [System.IO.Path]::GetRelativePath($resolvedRoot, $resolvedData).Replace("\", "/")
+$previousComposeDataPath = $env:DEMO_DATA_PATH
+$env:DEMO_DATA_PATH = "./$relativeDataPath"
 
 function Invoke-DemoCommand {
     param(
@@ -49,6 +65,30 @@ function Invoke-CancellationDemo {
     }
     finally {
         & docker rm --force $containerName 2>$null | Out-Null
+    }
+}
+
+function Invoke-RateLimitDemo {
+    $arguments = @("compose", "run", "--rm", "worker", "--jobs", "/app/samples/jobs.compose.rate-limit.jsonl")
+    Write-Host ""
+    Write-Host "== Recover from rate limiting using Retry-After =="
+    $output = & docker @arguments 2>&1
+    $exitCode = $LASTEXITCODE
+    $output | ForEach-Object { Write-Host $_ }
+    if ($exitCode -ne 0) {
+        throw "Rate-limit worker returned exit code $exitCode; expected 0."
+    }
+
+    $summaryLine = $output |
+        Where-Object { $_ -match '^\s*\{"completedJobs":' } |
+        Select-Object -Last 1
+    if (-not $summaryLine) {
+        throw "Rate-limit worker did not emit its JSON run summary."
+    }
+
+    $summary = $summaryLine | ConvertFrom-Json
+    if ($summary.completedJobs -ne 1 -or $summary.retriesScheduled -ne 8) {
+        throw "Rate-limit run summary reported $($summary.completedJobs) completed jobs and $($summary.retriesScheduled) retries; expected 1 job and 8 retries."
     }
 }
 
@@ -95,6 +135,10 @@ try {
     Invoke-DemoCommand "Report persisted state after duplicate delivery" @("compose", "run", "--rm", "demo-report")
 
     Invoke-DemoCommand "Run transient 503 recovery" @("compose", "run", "--rm", "worker", "--jobs", "/app/samples/jobs.compose.transient.jsonl")
+    if ($IncludeRateLimitScenario) {
+        Invoke-RateLimitDemo
+        Invoke-DemoCommand "Report persisted state after rate-limit recovery" @("compose", "run", "--rm", "demo-report")
+    }
     Invoke-DemoCommand "Stop at the catalog's natural end" @("compose", "run", "--rm", "worker", "--jobs", "/app/samples/jobs.compose.natural-end.jsonl")
     Invoke-DemoCommand "Run duplicate-item scenario" @("compose", "run", "--rm", "worker", "--jobs", "/app/samples/jobs.compose.duplicates.jsonl")
     Invoke-DemoCommand "Run bounded concurrency sample" @("compose", "run", "--rm", "worker", "--jobs", "/app/samples/jobs.compose.concurrent.jsonl")
@@ -116,5 +160,12 @@ try {
 finally {
     if (-not $KeepRunning) {
         Invoke-DemoCommand "Stop Compose services" @("compose", "down")
+    }
+
+    if ($null -eq $previousComposeDataPath) {
+        Remove-Item Env:DEMO_DATA_PATH -ErrorAction SilentlyContinue
+    }
+    else {
+        $env:DEMO_DATA_PATH = $previousComposeDataPath
     }
 }

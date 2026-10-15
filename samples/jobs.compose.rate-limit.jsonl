@@ -1,0 +1,1 @@
+{"jobId":"compose-rate-limit","target":"demo-catalog","startUrl":"http://demo-site:8080/catalog?scenario=rate-limit&run_id=compose-rate-limit&rate_limit_for=2&retry_after_seconds=1","maxPages":4}

@@ -41,7 +41,14 @@ jobs:
         shell: pwsh
         env:
           TEST_STAND_IMAGE: ${{ steps.stand.outputs.image }}
-        run: ./eng/demo-compose.ps1
+        run: |
+          $version = [version]($env:TEST_STAND_IMAGE -replace '^.*:(\d+\.\d+\.\d+).*$', '$1')
+          if ($version -ge [version]'1.2.0') {
+            ./eng/demo-compose.ps1 -IncludeRateLimitScenario
+          }
+          else {
+            ./eng/demo-compose.ps1
+          }
 
       - name: Record stable-pin policy
         if: always()
