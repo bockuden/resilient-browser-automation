@@ -33,9 +33,14 @@ image configured in Compose, and builds the worker image. It then exercises:
 - graceful cancellation; and
 - permanent failure with inspectable evidence.
 
+With `-IncludeRateLimitScenario` and an explicit Test Stand 1.2.0-or-newer image
+override, it also checks `429` recovery across four pages and asserts the final
+summary contains eight scheduled retries.
+
 The final report prints SQLite job, item, and checkpoint state. Unless
 `-KeepRunning` is supplied, the script stops the Compose services when it
-finishes.
+finishes. By default it resets `artifacts/docker-demo`; pass `-DataPath` with
+another path under `artifacts/` to keep an existing run's output intact.
 
 Terminal evidence is written as:
 
@@ -74,6 +79,7 @@ Useful deterministic scenarios:
 | --- | --- |
 | `scenario=success` | Normal dynamically rendered pagination |
 | `scenario=transient&fail_for=2` | First two API requests per page return `503` |
+| `scenario=rate-limit&rate_limit_for=2&retry_after_seconds=1` | On Test Stand 1.2.0+, first two API requests per page return `429` with `Retry-After`, then succeed |
 | `scenario=permanent` | Every catalog API request returns `500` |
 | `scenario=slow&delay_ms=3000` | Delayed API response |
 | `scenario=resume&fail_page=3` | Pages 1–2 succeed and page 3 fails |
@@ -95,6 +101,24 @@ Remove-Item Env:TEST_STAND_IMAGE
 
 The scheduled canary uses this override with the latest published release. It
 never edits `docker-compose.yml` or advances the stable pin automatically.
+
+Test Stand 1.2.0 adds rate limiting with `429` and `Retry-After`. The browser
+E2E workflow runs this scenario against the exact 1.2.0 image; the weekly
+canary also includes it when the latest release is 1.2.0 or newer. To run the
+extended Compose demo locally, set an exact 1.2.0-or-newer image override and
+pass `-IncludeRateLimitScenario`:
+
+```powershell
+$env:TEST_STAND_IMAGE = "ghcr.io/bockuden/resilient-automation-test-stand:1.2.0"
+.\eng\demo-compose.ps1 -IncludeRateLimitScenario
+Remove-Item Env:TEST_STAND_IMAGE
+```
+
+The sample triggers two `429` responses on each of four pages. The worker
+waits for the one-second `Retry-After` value, then completes all 20 items. Its
+final JSON run summary reports eight scheduled retries. See
+[`jobs.playwright.rate-limit.jsonl`](../samples/jobs.playwright.rate-limit.jsonl)
+and [`jobs.compose.rate-limit.jsonl`](../samples/jobs.compose.rate-limit.jsonl).
 
 ## Host Build and Tests
 
