@@ -87,6 +87,38 @@ public sealed class RetryExecutorTests
     }
 
     [Test]
+    public async Task ExecuteAsync_RetriesRateLimitUsingTheServerRetryAfterValue()
+    {
+        var clock = new FakeClock(DateTimeOffset.UtcNow);
+        var observer = new RecordingObserver();
+        var executor = CreateExecutor(clock, observer, maxAttempts: 3);
+        var attempts = 0;
+
+        var result = await executor.ExecuteAsync(
+            (_, _) =>
+            {
+                attempts++;
+                return attempts <= 2
+                    ? Task.FromException<string>(new BrowserOperationException(
+                        "HTTP 429",
+                        429,
+                        TimeSpan.FromSeconds(1)))
+                    : Task.FromResult("recovered");
+            },
+            clock.UtcNow + TimeSpan.FromSeconds(5),
+            CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result, Is.EqualTo("recovered"));
+            Assert.That(attempts, Is.EqualTo(3));
+            Assert.That(clock.Delays, Is.EqualTo([TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1)]));
+            Assert.That(observer.Decisions.Select(decision => decision.Delay),
+                Is.EqualTo([TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1)]));
+        });
+    }
+
+    [Test]
     public void ExecuteAsync_CancellationInterruptsBackoff()
     {
         var clock = new CancellingClock(DateTimeOffset.UtcNow);

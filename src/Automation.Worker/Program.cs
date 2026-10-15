@@ -34,6 +34,7 @@ try
     builder.Services.AddSingleton<IValidateOptions<AutomationWorkerOptions>, AutomationWorkerOptionsValidator>();
 
     builder.Services.AddSingleton(commandLine);
+    builder.Services.AddSingleton<WorkerRunSummary>();
     builder.Services.AddSingleton<JobLineParser>();
     builder.Services.AddSingleton<IJobSource, JsonLinesJobSource>();
     builder.Services.AddSingleton(serviceProvider =>
@@ -119,7 +120,7 @@ try
         await host.StopAsync(CancellationToken.None);
     }
 
-    Console.Out.WriteLine($"{{\"completedJobs\":{summary.CompletedJobs},\"rejectedJobs\":{summary.RejectedJobs},\"failedJobs\":{summary.FailedJobs},\"cancelledJobs\":{summary.CancelledJobs},\"exitCode\":{(int)summary.ExitCode}}}");
+    Console.Out.WriteLine($"{{\"completedJobs\":{summary.CompletedJobs},\"rejectedJobs\":{summary.RejectedJobs},\"failedJobs\":{summary.FailedJobs},\"cancelledJobs\":{summary.CancelledJobs},\"retriesScheduled\":{summary.RetriesScheduled},\"exitCode\":{(int)summary.ExitCode}}}");
     return (int)summary.ExitCode;
 }
 catch (OptionsValidationException error)

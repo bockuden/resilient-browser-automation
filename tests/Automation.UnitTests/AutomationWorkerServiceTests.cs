@@ -142,6 +142,7 @@ public sealed class AutomationWorkerServiceTests
             targetRateLimiter,
             options,
             new TestApplicationLifetime(),
+            new WorkerRunSummary(),
             NullLogger<AutomationWorkerService>.Instance);
     }
 

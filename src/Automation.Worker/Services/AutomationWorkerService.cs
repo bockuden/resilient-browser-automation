@@ -15,6 +15,7 @@ public sealed class AutomationWorkerService(
     ITargetRateLimiter targetRateLimiter,
     IOptions<AutomationWorkerOptions> options,
     IHostApplicationLifetime applicationLifetime,
+    WorkerRunSummary summary,
     ILogger<AutomationWorkerService> logger) : BackgroundService
 {
     private readonly TaskCompletionSource<WorkerRunSummary> completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -24,7 +25,6 @@ public sealed class AutomationWorkerService(
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var summary = new WorkerRunSummary();
         using var intakeCancellation = new CancellationTokenSource();
         using var jobCancellation = new CancellationTokenSource();
         using var shutdownRegistration = stoppingToken.Register(() =>
