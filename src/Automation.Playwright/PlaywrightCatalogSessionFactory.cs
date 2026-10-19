@@ -40,7 +40,7 @@ public sealed class PlaywrightCatalogSessionFactory(
             })
                 .WaitAsync(cancellationToken);
             await AuthenticateDemoSiteIfRequiredAsync(page, cancellationToken);
-            return new PlaywrightCatalogSession(context, page);
+            return new PlaywrightCatalogSession(context, page, AuthenticateDemoSiteIfRequiredAsync);
         }
         catch
         {
@@ -106,6 +106,8 @@ public sealed class PlaywrightCatalogSessionFactory(
         await page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Sign in" })
             .ClickAsync()
             .WaitAsync(cancellationToken);
+        await page.WaitForFunctionAsync("() => window.location.pathname !== '/login'")
+            .WaitAsync(cancellationToken);
     }
 }
 
@@ -122,7 +124,10 @@ public sealed class PlaywrightBrowserOptions
     public required string DemoPassword { get; init; }
 }
 
-internal sealed class PlaywrightCatalogSession(IBrowserContext context, IPage page) : IBrowserCatalogSession, IFailureEvidenceCollector
+internal sealed class PlaywrightCatalogSession(
+    IBrowserContext context,
+    IPage page,
+    Func<IPage, CancellationToken, Task> authenticateIfRequired) : IBrowserCatalogSession, IFailureEvidenceCollector
 {
     private int loadedPage = 1;
     private bool initialPageReady;
@@ -131,7 +136,7 @@ internal sealed class PlaywrightCatalogSession(IBrowserContext context, IPage pa
     {
         if (!initialPageReady)
         {
-            await WaitForCatalogPageAsync(page, 1, cancellationToken);
+            await WaitForCatalogPageAsync(1, cancellationToken);
             initialPageReady = true;
         }
 
@@ -201,14 +206,14 @@ internal sealed class PlaywrightCatalogSession(IBrowserContext context, IPage pa
         }
     }
 
-    internal static async Task WaitForCatalogPageAsync(
-        IPage page,
+    private async Task WaitForCatalogPageAsync(
         int expectedPage,
         CancellationToken cancellationToken)
     {
         await page.WaitForFunctionAsync(
             """
             (expected) => {
+              if (window.location.pathname === '/login') return true;
               const status = document.querySelector('[role="status"]');
               return status?.textContent?.includes(`Page ${expected} loaded`) ||
                 status?.dataset.testid === 'catalog-error';
@@ -216,6 +221,18 @@ internal sealed class PlaywrightCatalogSession(IBrowserContext context, IPage pa
             """,
             expectedPage)
             .WaitAsync(cancellationToken);
+
+        if (string.Equals(new Uri(page.Url).AbsolutePath, "/login", StringComparison.Ordinal))
+        {
+            await authenticateIfRequired(page, cancellationToken);
+            if (string.Equals(new Uri(page.Url).AbsolutePath, "/login", StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException("Demo-site authentication did not return to the catalog.");
+            }
+
+            await WaitForCatalogPageAsync(expectedPage, cancellationToken);
+            return;
+        }
 
         var status = await page.GetByRole(AriaRole.Status).InnerTextAsync().WaitAsync(cancellationToken);
         if (status.StartsWith("Catalog error:", StringComparison.Ordinal))
@@ -249,7 +266,7 @@ internal sealed class PlaywrightCatalogSession(IBrowserContext context, IPage pa
             }
 
             await next.ClickAsync().WaitAsync(cancellationToken);
-            await WaitForCatalogPageAsync(page, loadedPage + 1, cancellationToken);
+            await WaitForCatalogPageAsync(loadedPage + 1, cancellationToken);
             loadedPage++;
         }
 

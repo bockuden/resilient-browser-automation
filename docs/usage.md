@@ -184,7 +184,15 @@ browser context. It uses `data-testid` and role/label locators so the
 For protected scenarios, the worker fills the labelled username and password
 fields and clicks `Sign in`. It then reads catalog item cards and clicks
 `Next page` until the control is absent or `maxPages` is reached. Demo
-credentials are typed settings and are never written to logs.
+credentials are typed settings and are never written to URLs or logs. If a
+protected page redirects to `/login` after session expiry, the worker signs in
+again and waits for the interrupted page to load before continuing, preserving
+the completed-page checkpoint.
+
+The Test Stand 1.2.0 session-expiry sample exercises this flow after page 1:
+[`jobs.compose.session-expiry.jsonl`](../samples/jobs.compose.session-expiry.jsonl).
+The Compose compatibility workflow verifies the resumed checkpoint and all 20
+items across four pages.
 
 ## Retry and Timeout Behavior
 

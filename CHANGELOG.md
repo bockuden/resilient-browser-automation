@@ -9,6 +9,9 @@ All notable changes to Resilient Browser Automation are documented here.
 - A reproducible Test Stand 1.2.0 rate-limit compatibility run that verifies
   `429` recovery, the server-provided `Retry-After` delay, persisted pages, and
   the scheduled retry count.
+- Protected-session recovery against Test Stand 1.2.0, including login after
+  session expiry, resuming the interrupted page, and verifying persisted
+  checkpoints and items.
 - A SemVer tag release workflow gated by fast tests and full Compose E2E that
   publishes the worker image, an SPDX JSON SBOM, and a GitHub Release.
 - A weekly/manual compatibility canary against the latest published stable Test
@@ -21,6 +24,8 @@ All notable changes to Resilient Browser Automation are documented here.
 ### Changed
 
 - Include scheduled retry counts in the worker's final JSON run summary.
+- Re-authenticate protected catalog sessions after expiry and continue from the
+  page requested by the Test Stand.
 - Advanced the default Compose Test Stand pin to the independently released
   `1.1.5` image after compatibility canary validation.
 - Reduced README from 328 to 167 lines and placed the complete copy-paste demo
