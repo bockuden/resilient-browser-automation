@@ -1,1 +1,0 @@
-{"jobId":"catalog-playwright-session-expiry","target":"demo-catalog","startUrl":"http://127.0.0.1:8080/catalog?scenario=success&run_id=playwright-session-expiry&protected=true&expire_session_after_page=1","maxPages":4}
