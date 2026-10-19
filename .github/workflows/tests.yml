@@ -247,7 +247,7 @@ jobs:
         env:
           TEST_STAND_IMAGE: ghcr.io/bockuden/resilient-automation-test-stand:1.2.0
         run: |
-          $output = & docker compose run --rm worker --jobs /app/samples/jobs.compose.session-expiry.jsonl 2>&1
+          $output = & dotnet run --project src/Automation.Worker/Automation.Worker.csproj --configuration Release --no-build -- --jobs samples/jobs.playwright.session-expiry.jsonl 2>&1
           $exitCode = $LASTEXITCODE
           $output | ForEach-Object { Write-Host $_ }
           if ($exitCode -ne 0) {
@@ -269,7 +269,7 @@ jobs:
         run: |
           python - <<'PY'
           import sqlite3
-          job_id = "catalog-compose-session-expiry"
+          job_id = "catalog-playwright-session-expiry"
           with sqlite3.connect("artifacts/automation.db") as connection:
               checkpoint = connection.execute(
                   "select last_completed_page from checkpoints where job_id = ?",
