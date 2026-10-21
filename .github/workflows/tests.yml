@@ -364,16 +364,19 @@ jobs:
           curl --fail --silent http://localhost:8080/health
 
       - name: Verify custom selector tokens
-        shell: pwsh
+        shell: bash
         env:
           TEST_STAND_IMAGE: ghcr.io/bockuden/resilient-automation-test-stand:1.2.0
         run: |
-          $output = & dotnet run --project src/Automation.Worker/Automation.Worker.csproj --configuration Release --no-build -- --jobs samples/jobs.playwright.custom-selectors.jsonl 2>&1
-          $exitCode = $LASTEXITCODE
-          $output | ForEach-Object { Write-Host $_ }
-          if ($exitCode -ne 0) {
-            throw "Custom selector-token job returned exit code $exitCode; expected 0."
-          }
+          set +e
+          dotnet run --project src/Automation.Worker/Automation.Worker.csproj --configuration Release --no-build -- --jobs samples/jobs.playwright.custom-selectors.jsonl > custom-selectors.log 2>&1
+          exit_code=$?
+          set -e
+          cat custom-selectors.log
+          if [ "$exit_code" -ne 0 ]; then
+            echo "Custom selector-token job returned exit code $exit_code; expected 0."
+            exit 1
+          fi
           python - <<'PY'
           import sqlite3
           with sqlite3.connect("artifacts/automation.db") as connection:
