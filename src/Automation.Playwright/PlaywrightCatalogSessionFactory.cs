@@ -114,6 +114,18 @@ public sealed class PlaywrightCatalogSessionFactory(
             AriaRole.Button,
             new PageGetByRoleOptions { Name = "Sign in", Exact = true });
         await WaitForVisibleAsync(loginButton, cancellationToken);
+        var loginButtonCount = await loginButton.CountAsync().WaitAsync(cancellationToken);
+        if (loginButtonCount != 1)
+        {
+            throw new InvalidOperationException(
+                $"The login button semantic fallback matched {loginButtonCount} elements; exactly one is required.");
+        }
+
+        if (!await loginButton.IsVisibleAsync().WaitAsync(cancellationToken))
+        {
+            throw new InvalidOperationException("The login button selector matched a hidden element.");
+        }
+
         var loginTestId = await loginButton.GetAttributeAsync("data-testid").WaitAsync(cancellationToken);
         var configuredLoginButton = string.IsNullOrWhiteSpace(loginTestId) ||
             loginTestId.EndsWith("-changed", StringComparison.Ordinal)
@@ -231,10 +243,10 @@ internal sealed class PlaywrightCatalogSession(
         selectors ??= await ReadSelectorsAsync(cancellationToken);
         var catalog = page.GetByTestId(Selector("catalog"));
         var catalogCount = await catalog.CountAsync().WaitAsync(cancellationToken);
-        if (catalogCount != 1 || !await catalog.IsVisibleAsync().WaitAsync(cancellationToken))
+        if (catalogCount != 1)
         {
             throw new InvalidOperationException(
-                $"Configured 'catalog' selector matched {catalogCount} visible containers; exactly one is required.");
+                $"Configured 'catalog' selector matched {catalogCount} containers; exactly one is required.");
         }
 
         var cards = await ResolveCollectionAsync("item", catalog.Locator("[data-item-id]"), cancellationToken);
