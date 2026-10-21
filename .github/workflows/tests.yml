@@ -351,6 +351,8 @@ jobs:
 
       - name: Start target with custom selector tokens
         shell: bash
+        env:
+          TEST_STAND_IMAGE: ghcr.io/bockuden/resilient-automation-test-stand:1.2.0
         run: |
           docker compose run --detach --name selector-config-stand --publish 8080:8080 \
             --volume "$PWD/eng/selector-tokens.toml:/app/selectors.toml:ro" demo-site \
