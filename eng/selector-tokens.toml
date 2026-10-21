@@ -1,0 +1,11 @@
+[selectors]
+username = "account-name"
+password = "account-secret"
+login_button = "submit-login"
+catalog = "product-list"
+item = "product-card"
+item_name = "product-title"
+item_price = "product-cost"
+next_page = "page-forward"
+
+[presets.default]

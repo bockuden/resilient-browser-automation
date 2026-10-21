@@ -4,6 +4,13 @@ All notable changes to Resilient Browser Automation are documented here.
 
 ## Unreleased
 
+- Recover from missing, changed, and delayed browser locator tokens through
+  unique semantic fallbacks; fail closed on ambiguous, hidden, or disabled
+  targets with browser evidence.
+- Read configured `data-testid` tokens from the Test Stand page and cover the
+  Test Stand 1.2.0 selector-failure matrix and custom selector configuration in
+  Compose compatibility CI.
+
 ### Added
 
 - A reproducible Test Stand 1.2.0 rate-limit compatibility run that verifies
