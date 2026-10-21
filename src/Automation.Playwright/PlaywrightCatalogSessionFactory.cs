@@ -498,22 +498,28 @@ internal sealed class PlaywrightCatalogSession(
         using var document = JsonDocument.Parse(json);
         var root = document.RootElement;
         totalPages = root.GetProperty("totalPages").GetInt32();
-        if (!root.TryGetProperty("selectors", out var selectorElement))
+        var resolvedSelectors = new Dictionary<string, string>(DefaultSelectors, StringComparer.Ordinal);
+        if (!root.TryGetProperty("selectors", out var selectorElement) ||
+            selectorElement.ValueKind != JsonValueKind.Object)
         {
-            return new Dictionary<string, string>(DefaultSelectors, StringComparer.Ordinal);
+            return resolvedSelectors;
         }
 
-        return selectorElement.EnumerateObject().ToDictionary(
-            property => property.Name,
-            property => property.Value.GetString()
-                ?? throw new InvalidOperationException($"Configured selector '{property.Name}' is empty."),
-            StringComparer.Ordinal);
+        foreach (var property in selectorElement.EnumerateObject())
+        {
+            resolvedSelectors[property.Name] = property.Value.GetString()
+                ?? throw new InvalidOperationException($"Configured selector '{property.Name}' is empty.");
+        }
+
+        return resolvedSelectors;
     }
 
     private string Selector(string name) =>
         selectors is not null && selectors.TryGetValue(name, out var configured)
             ? configured
-            : throw new InvalidOperationException($"The page did not provide the '{name}' selector token.");
+            : DefaultSelectors.TryGetValue(name, out var fallback)
+                ? fallback
+                : throw new InvalidOperationException($"The page did not provide the '{name}' selector token.");
 
     private async Task WaitForVisibleAsync(ILocator locator, CancellationToken cancellationToken)
     {
