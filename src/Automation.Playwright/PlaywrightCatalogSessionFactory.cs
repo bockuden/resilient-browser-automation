@@ -112,7 +112,7 @@ public sealed class PlaywrightCatalogSessionFactory(
 
         var loginButton = page.GetByRole(
             AriaRole.Button,
-            new PageGetByRoleOptions { Name = "Sign in", Exact = true });
+            new PageGetByRoleOptions { Name = "Sign in", Exact = true, IncludeHidden = true });
         await WaitForVisibleAsync(loginButton, cancellationToken);
         var loginButtonCount = await loginButton.CountAsync().WaitAsync(cancellationToken);
         if (loginButtonCount != 1)
