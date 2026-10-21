@@ -222,6 +222,17 @@ internal sealed class PlaywrightCatalogSession(
     float operationTimeoutMilliseconds) : IBrowserCatalogSession, IFailureEvidenceCollector
 {
     private const int DelayedSelectorTimeoutMilliseconds = 6000;
+    private static readonly Dictionary<string, string> DefaultSelectors = new(StringComparer.Ordinal)
+    {
+        ["username"] = "username",
+        ["password"] = "password",
+        ["login_button"] = "login-submit",
+        ["catalog"] = "catalog",
+        ["item"] = "catalog-item",
+        ["item_name"] = "item-name",
+        ["item_price"] = "item-price",
+        ["next_page"] = "next-page",
+    };
     private Dictionary<string, string>? selectors;
     private int totalPages;
     private int loadedPage = 1;
@@ -241,8 +252,14 @@ internal sealed class PlaywrightCatalogSession(
         }
 
         selectors ??= await ReadSelectorsAsync(cancellationToken);
-        var catalog = page.GetByTestId(Selector("catalog"));
+        ILocator catalog = page.GetByTestId(Selector("catalog"));
         var catalogCount = await catalog.CountAsync().WaitAsync(cancellationToken);
+        if (catalogCount == 0)
+        {
+            catalog = page.Locator("#catalog");
+            catalogCount = await catalog.CountAsync().WaitAsync(cancellationToken);
+        }
+
         if (catalogCount != 1)
         {
             throw new InvalidOperationException(
@@ -479,8 +496,13 @@ internal sealed class PlaywrightCatalogSession(
     {
         var json = await page.Locator("#catalog-config").InnerTextAsync().WaitAsync(cancellationToken);
         using var document = JsonDocument.Parse(json);
-        totalPages = document.RootElement.GetProperty("totalPages").GetInt32();
-        var selectorElement = document.RootElement.GetProperty("selectors");
+        var root = document.RootElement;
+        totalPages = root.GetProperty("totalPages").GetInt32();
+        if (!root.TryGetProperty("selectors", out var selectorElement))
+        {
+            return new Dictionary<string, string>(DefaultSelectors, StringComparer.Ordinal);
+        }
+
         return selectorElement.EnumerateObject().ToDictionary(
             property => property.Name,
             property => property.Value.GetString()
