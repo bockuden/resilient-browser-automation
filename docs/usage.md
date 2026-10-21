@@ -194,6 +194,15 @@ The Test Stand 1.2.0 session-expiry sample exercises this flow after page 1:
 The Compose compatibility workflow verifies the resumed checkpoint and all 20
 items across four pages.
 
+The same workflow runs the complete selector-failure matrix from
+[`jobs.playwright.selector-failures.jsonl`](../samples/jobs.playwright.selector-failures.jsonl):
+`missing`, `changed`, and `delayed` targets recover through the target's
+configured token or a unique semantic fallback. `multiple`, `hidden`, and
+`disabled` targets fail explicitly and retain the error metadata, page HTML,
+screenshot, and browser trace. A separate run starts the stand with
+[`selector-tokens.toml`](../eng/selector-tokens.toml) and verifies a complete
+four-page extraction using its custom `data-testid` tokens.
+
 ## Retry and Timeout Behavior
 
 HTTP `408`, `429`, `502`, `503`, and `504`, selected browser timeouts, and

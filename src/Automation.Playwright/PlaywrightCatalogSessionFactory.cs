@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Automation.Application;
 using Automation.Application.Abstractions;
@@ -39,8 +40,11 @@ public sealed class PlaywrightCatalogSessionFactory(
                 Timeout = options.NavigationTimeoutMilliseconds,
             })
                 .WaitAsync(cancellationToken);
-            await AuthenticateDemoSiteIfRequiredAsync(page, cancellationToken);
-            return new PlaywrightCatalogSession(context, page, AuthenticateDemoSiteIfRequiredAsync);
+            return new PlaywrightCatalogSession(
+                context,
+                page,
+                AuthenticateDemoSiteIfRequiredAsync,
+                options.OperationTimeoutMilliseconds);
         }
         catch
         {
@@ -101,13 +105,100 @@ public sealed class PlaywrightCatalogSessionFactory(
             return;
         }
 
-        await page.GetByLabel("Username").FillAsync(options.DemoUsername).WaitAsync(cancellationToken);
-        await page.GetByLabel("Password").FillAsync(options.DemoPassword).WaitAsync(cancellationToken);
-        await page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Sign in" })
-            .ClickAsync()
-            .WaitAsync(cancellationToken);
+        var username = await ResolveConfiguredFieldAsync(page, "Username", cancellationToken);
+        var password = await ResolveConfiguredFieldAsync(page, "Password", cancellationToken);
+        await username.FillAsync(options.DemoUsername).WaitAsync(cancellationToken);
+        await password.FillAsync(options.DemoPassword).WaitAsync(cancellationToken);
+
+        var loginButton = page.GetByRole(
+            AriaRole.Button,
+            new PageGetByRoleOptions { Name = "Sign in", Exact = true, IncludeHidden = true });
+        await WaitForVisibleAsync(loginButton, cancellationToken);
+        var loginButtonCount = await loginButton.CountAsync().WaitAsync(cancellationToken);
+        if (loginButtonCount != 1)
+        {
+            throw new InvalidOperationException(
+                $"The login button semantic fallback matched {loginButtonCount} elements; exactly one is required.");
+        }
+
+        if (!await loginButton.IsVisibleAsync().WaitAsync(cancellationToken))
+        {
+            throw new InvalidOperationException("The login button selector matched a hidden element.");
+        }
+
+        var loginTestId = await loginButton.GetAttributeAsync("data-testid").WaitAsync(cancellationToken);
+        var configuredLoginButton = string.IsNullOrWhiteSpace(loginTestId) ||
+            loginTestId.EndsWith("-changed", StringComparison.Ordinal)
+                ? loginButton
+                : page.GetByTestId(loginTestId);
+        await EnsureSingleEnabledControlAsync(configuredLoginButton, "login button", cancellationToken);
+        await configuredLoginButton.ClickAsync().WaitAsync(cancellationToken);
         await page.WaitForFunctionAsync("() => window.location.pathname !== '/login'")
             .WaitAsync(cancellationToken);
+    }
+
+    private async Task WaitForVisibleAsync(ILocator locator, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await locator.WaitForAsync(new LocatorWaitForOptions
+            {
+                State = WaitForSelectorState.Visible,
+                Timeout = Math.Min(options.OperationTimeoutMilliseconds, 6000),
+            }).WaitAsync(cancellationToken);
+        }
+        catch (TimeoutException)
+        {
+            // The validation below reports missing and hidden controls precisely.
+        }
+    }
+
+    private static async Task EnsureSingleEnabledControlAsync(
+        ILocator locator,
+        string description,
+        CancellationToken cancellationToken)
+    {
+        var count = await locator.CountAsync().WaitAsync(cancellationToken);
+        if (count != 1)
+        {
+            throw new InvalidOperationException(
+                $"The {description} selector matched {count} elements; exactly one is required.");
+        }
+
+        if (!await locator.IsVisibleAsync().WaitAsync(cancellationToken))
+        {
+            throw new InvalidOperationException($"The {description} selector matched a hidden element.");
+        }
+
+        if (!await locator.IsEnabledAsync().WaitAsync(cancellationToken))
+        {
+            throw new InvalidOperationException($"The {description} selector matched a disabled element.");
+        }
+    }
+
+    private static async Task<ILocator> ResolveConfiguredFieldAsync(
+        IPage page,
+        string label,
+        CancellationToken cancellationToken)
+    {
+        var semantic = page.GetByLabel(label, new PageGetByLabelOptions { Exact = true });
+        var token = await semantic.GetAttributeAsync("data-testid").WaitAsync(cancellationToken);
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            await EnsureSingleEnabledControlAsync(semantic, $"{label} field", cancellationToken);
+            return semantic;
+        }
+
+        var configured = page.GetByTestId(token);
+        var count = await configured.CountAsync().WaitAsync(cancellationToken);
+        if (count == 0)
+        {
+            await EnsureSingleEnabledControlAsync(semantic, $"{label} field", cancellationToken);
+            return semantic;
+        }
+
+        await EnsureSingleEnabledControlAsync(configured, $"{label} field", cancellationToken);
+        return configured;
     }
 }
 
@@ -127,8 +218,23 @@ public sealed class PlaywrightBrowserOptions
 internal sealed class PlaywrightCatalogSession(
     IBrowserContext context,
     IPage page,
-    Func<IPage, CancellationToken, Task> authenticateIfRequired) : IBrowserCatalogSession, IFailureEvidenceCollector
+    Func<IPage, CancellationToken, Task> authenticateIfRequired,
+    float operationTimeoutMilliseconds) : IBrowserCatalogSession, IFailureEvidenceCollector
 {
+    private const int DelayedSelectorTimeoutMilliseconds = 6000;
+    private static readonly Dictionary<string, string> DefaultSelectors = new(StringComparer.Ordinal)
+    {
+        ["username"] = "username",
+        ["password"] = "password",
+        ["login_button"] = "login-submit",
+        ["catalog"] = "catalog",
+        ["item"] = "catalog-item",
+        ["item_name"] = "item-name",
+        ["item_price"] = "item-price",
+        ["next_page"] = "next-page",
+    };
+    private Dictionary<string, string>? selectors;
+    private int totalPages;
     private int loadedPage = 1;
     private bool initialPageReady;
 
@@ -145,16 +251,38 @@ internal sealed class PlaywrightCatalogSession(
             return null;
         }
 
-        var cards = page.GetByTestId("catalog-item");
+        selectors ??= await ReadSelectorsAsync(cancellationToken);
+        ILocator catalog = page.GetByTestId(Selector("catalog"));
+        var catalogCount = await catalog.CountAsync().WaitAsync(cancellationToken);
+        if (catalogCount == 0)
+        {
+            catalog = page.Locator("#catalog");
+            catalogCount = await catalog.CountAsync().WaitAsync(cancellationToken);
+        }
+
+        if (catalogCount != 1)
+        {
+            throw new InvalidOperationException(
+                $"Configured 'catalog' selector matched {catalogCount} containers; exactly one is required.");
+        }
+
+        var cards = await ResolveCollectionAsync("item", catalog.Locator("[data-item-id]"), cancellationToken);
         var count = await cards.CountAsync().WaitAsync(cancellationToken);
         var items = new List<CatalogItem>(count);
+        var externalIds = new HashSet<string>(StringComparer.Ordinal);
         for (var index = 0; index < count; index++)
         {
             var card = cards.Nth(index);
             var externalId = await card.GetAttributeAsync("data-item-id").WaitAsync(cancellationToken)
                 ?? throw new InvalidOperationException("Catalog item is missing data-item-id.");
-            var name = await card.GetByTestId("item-name").InnerTextAsync().WaitAsync(cancellationToken);
-            var priceText = await card.GetByTestId("item-price").InnerTextAsync().WaitAsync(cancellationToken);
+            if (!externalIds.Add(externalId))
+            {
+                throw new InvalidOperationException(
+                    $"Catalog item selector matched duplicate item id '{externalId}' on page {pageNumber}.");
+            }
+
+            var name = await card.GetByTestId(Selector("item_name")).InnerTextAsync().WaitAsync(cancellationToken);
+            var priceText = await card.GetByTestId(Selector("item_price")).InnerTextAsync().WaitAsync(cancellationToken);
             if (!decimal.TryParse(priceText, NumberStyles.Number, CultureInfo.InvariantCulture, out var price))
             {
                 throw new InvalidOperationException($"Catalog item '{externalId}' has an invalid price.");
@@ -163,7 +291,15 @@ internal sealed class PlaywrightCatalogSession(
             items.Add(new CatalogItem(externalId, name, price, pageNumber, new Uri(page.Url)));
         }
 
-        var hasNextPage = await page.GetByTestId("next-page").CountAsync().WaitAsync(cancellationToken) > 0;
+        if (pageNumber >= totalPages)
+        {
+            return new CatalogPageExtraction(items, HasNextPage: false);
+        }
+
+        var hasNextPage = await ResolveOptionalControlAsync(
+            "next_page",
+            page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Next page", Exact = true }),
+            cancellationToken) is not null;
         return new CatalogPageExtraction(items, hasNextPage);
     }
 
@@ -259,8 +395,11 @@ internal sealed class PlaywrightCatalogSession(
 
         while (loadedPage < requestedPage)
         {
-            var next = page.GetByTestId("next-page");
-            if (await next.CountAsync().WaitAsync(cancellationToken) == 0)
+            var next = await ResolveOptionalControlAsync(
+                "next_page",
+                page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Next page", Exact = true }),
+                cancellationToken);
+            if (next is null)
             {
                 return false;
             }
@@ -271,6 +410,159 @@ internal sealed class PlaywrightCatalogSession(
         }
 
         return true;
+    }
+
+    private async Task<ILocator> ResolveCollectionAsync(
+        string selectorName,
+        ILocator fallback,
+        CancellationToken cancellationToken)
+    {
+        var configured = page.GetByTestId(Selector(selectorName));
+        var count = await configured.CountAsync().WaitAsync(cancellationToken);
+        if (count == 0)
+        {
+            await WaitForVisibleAsync(configured, cancellationToken);
+            count = await configured.CountAsync().WaitAsync(cancellationToken);
+        }
+
+        if (count > 0)
+        {
+            for (var index = 0; index < count; index++)
+            {
+                if (!await configured.Nth(index).IsVisibleAsync().WaitAsync(cancellationToken))
+                {
+                    throw new InvalidOperationException(
+                        $"Configured '{selectorName}' selector matched a hidden element.");
+                }
+
+                var disabled = await configured.Nth(index).GetAttributeAsync("aria-disabled")
+                    .WaitAsync(cancellationToken);
+                if (string.Equals(disabled, "true", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException(
+                        $"Configured '{selectorName}' selector matched a disabled element.");
+                }
+            }
+
+            return configured;
+        }
+
+        if (await fallback.CountAsync().WaitAsync(cancellationToken) == 0)
+        {
+            throw new InvalidOperationException(
+                $"Configured '{selectorName}' selector '{Selector(selectorName)}' was unavailable, " +
+                "and its semantic fallback matched no elements.");
+        }
+
+        return fallback;
+    }
+
+    private async Task<ILocator?> ResolveOptionalControlAsync(
+        string selectorName,
+        ILocator fallback,
+        CancellationToken cancellationToken)
+    {
+        var configured = page.GetByTestId(Selector(selectorName));
+        var count = await configured.CountAsync().WaitAsync(cancellationToken);
+        if (count == 0)
+        {
+            await WaitForVisibleAsync(configured, cancellationToken);
+            count = await configured.CountAsync().WaitAsync(cancellationToken);
+        }
+
+        if (count == 0)
+        {
+            var fallbackCount = await fallback.CountAsync().WaitAsync(cancellationToken);
+            if (fallbackCount == 0)
+            {
+                return null;
+            }
+
+            if (fallbackCount > 1)
+            {
+                throw new InvalidOperationException(
+                    $"Semantic fallback for '{selectorName}' matched {fallbackCount} elements.");
+            }
+
+            await EnsureSingleEnabledControlAsync(fallback, selectorName, cancellationToken);
+            return fallback;
+        }
+
+        await EnsureSingleEnabledControlAsync(configured, selectorName, cancellationToken);
+        return configured;
+    }
+
+    private async Task<Dictionary<string, string>> ReadSelectorsAsync(CancellationToken cancellationToken)
+    {
+        var json = await page.Locator("#catalog-config").InnerTextAsync().WaitAsync(cancellationToken);
+        using var document = JsonDocument.Parse(json);
+        var root = document.RootElement;
+        totalPages = root.GetProperty("totalPages").GetInt32();
+        var resolvedSelectors = new Dictionary<string, string>(DefaultSelectors, StringComparer.Ordinal);
+        if (!root.TryGetProperty("selectors", out var selectorElement) ||
+            selectorElement.ValueKind != JsonValueKind.Object)
+        {
+            return resolvedSelectors;
+        }
+
+        foreach (var property in selectorElement.EnumerateObject())
+        {
+            resolvedSelectors[property.Name] = property.Value.GetString()
+                ?? throw new InvalidOperationException($"Configured selector '{property.Name}' is empty.");
+        }
+
+        return resolvedSelectors;
+    }
+
+    private string Selector(string name) =>
+        selectors is not null && selectors.TryGetValue(name, out var configured)
+            ? configured
+            : DefaultSelectors.TryGetValue(name, out var fallback)
+                ? fallback
+                : throw new InvalidOperationException($"The page did not provide the '{name}' selector token.");
+
+    private async Task WaitForVisibleAsync(ILocator locator, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await locator.WaitForAsync(new LocatorWaitForOptions
+            {
+                State = WaitForSelectorState.Visible,
+                Timeout = Math.Min(operationTimeoutMilliseconds, DelayedSelectorTimeoutMilliseconds),
+            }).WaitAsync(cancellationToken);
+        }
+        catch (TimeoutException)
+        {
+            // Count and state checks below distinguish a genuinely missing selector from
+            // a present but hidden target after allowing bounded delayed selectors to appear.
+        }
+    }
+
+    private static async Task EnsureSingleEnabledControlAsync(
+        ILocator locator,
+        string description,
+        CancellationToken cancellationToken)
+    {
+        var count = await locator.CountAsync().WaitAsync(cancellationToken);
+        if (count != 1)
+        {
+            throw new InvalidOperationException(
+                $"The {description} selector matched {count} elements; exactly one is required.");
+        }
+
+        if (!await locator.IsVisibleAsync().WaitAsync(cancellationToken))
+        {
+            throw new InvalidOperationException($"The {description} selector matched a hidden element.");
+        }
+
+        if (!await locator.IsEnabledAsync().WaitAsync(cancellationToken) ||
+            string.Equals(
+                await locator.GetAttributeAsync("aria-disabled").WaitAsync(cancellationToken),
+                "true",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException($"The {description} selector matched a disabled element.");
+        }
     }
 
     private static string RedactHtml(string value) =>
