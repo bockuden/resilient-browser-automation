@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Automation.Application;
@@ -34,17 +35,20 @@ public sealed class PlaywrightCatalogSessionFactory(
 
         try
         {
+            var session = new PlaywrightCatalogSession(
+                context,
+                page,
+                AuthenticateDemoSiteIfRequiredAsync,
+                options.OperationTimeoutMilliseconds);
+            await page.RouteAsync("**/api/catalog**", session.ValidateApiResponseAsync)
+                .WaitAsync(cancellationToken);
             await page.GotoAsync(job.StartUrl.AbsoluteUri, new PageGotoOptions
             {
                 WaitUntil = WaitUntilState.DOMContentLoaded,
                 Timeout = options.NavigationTimeoutMilliseconds,
             })
                 .WaitAsync(cancellationToken);
-            return new PlaywrightCatalogSession(
-                context,
-                page,
-                AuthenticateDemoSiteIfRequiredAsync,
-                options.OperationTimeoutMilliseconds);
+            return session;
         }
         catch
         {
@@ -234,6 +238,7 @@ internal sealed class PlaywrightCatalogSession(
         ["next_page"] = "next-page",
     };
     private Dictionary<string, string>? selectors;
+    private string? apiContractFailure;
     private int totalPages;
     private int loadedPage = 1;
     private bool initialPageReady;
@@ -301,6 +306,35 @@ internal sealed class PlaywrightCatalogSession(
             page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Next page", Exact = true }),
             cancellationToken) is not null;
         return new CatalogPageExtraction(items, hasNextPage);
+    }
+
+    public async Task ValidateApiResponseAsync(IRoute route)
+    {
+        var response = await route.FetchAsync();
+        if (!response.Ok)
+        {
+            await route.FulfillAsync(new RouteFulfillOptions { Response = response });
+            return;
+        }
+
+        var contentType = response.Headers.TryGetValue("content-type", out var headerValue)
+            ? headerValue
+            : null;
+        if (!MediaTypeHeaderValue.TryParse(contentType, out var mediaType) ||
+            !string.Equals(mediaType.MediaType, "application/json", StringComparison.OrdinalIgnoreCase))
+        {
+            await FailApiResponseAsync(route, "expected Content-Type application/json");
+            return;
+        }
+
+        var body = await response.BodyAsync();
+        if (!TryValidateCatalogResponse(body, out var failureReason))
+        {
+            await FailApiResponseAsync(route, failureReason);
+            return;
+        }
+
+        await route.FulfillAsync(new RouteFulfillOptions { Response = response });
     }
 
     public ValueTask DisposeAsync() => context.DisposeAsync();
@@ -373,6 +407,11 @@ internal sealed class PlaywrightCatalogSession(
         var status = await page.GetByRole(AriaRole.Status).InnerTextAsync().WaitAsync(cancellationToken);
         if (status.StartsWith("Catalog error:", StringComparison.Ordinal))
         {
+            if (apiContractFailure is not null)
+            {
+                throw new InvalidDataException($"Catalog API response contract validation failed: {apiContractFailure}");
+            }
+
             var statusMatch = Regex.Match(status, "HTTP\\s+(\\d{3})");
             int? statusCode = int.TryParse(statusMatch.Groups[1].Value, out var statusValue) ? statusValue : null;
             var retryAfterMatch = Regex.Match(status, "retry-after=([0-9]+(?:\\.[0-9]+)?)", RegexOptions.IgnoreCase);
@@ -520,6 +559,94 @@ internal sealed class PlaywrightCatalogSession(
             : DefaultSelectors.TryGetValue(name, out var fallback)
                 ? fallback
                 : throw new InvalidOperationException($"The page did not provide the '{name}' selector token.");
+
+    private async Task FailApiResponseAsync(IRoute route, string reason)
+    {
+        apiContractFailure = reason;
+        await route.FulfillAsync(new RouteFulfillOptions
+        {
+            Status = 502,
+            ContentType = "application/json",
+            Body = "{}",
+        });
+    }
+
+    private static bool TryValidateCatalogResponse(byte[] body, out string failureReason)
+    {
+        JsonDocument document;
+        try
+        {
+            document = JsonDocument.Parse(body);
+        }
+        catch (JsonException)
+        {
+            failureReason = "response body is not valid JSON";
+            return false;
+        }
+
+        using (document)
+        {
+            var root = document.RootElement;
+            if (root.ValueKind != JsonValueKind.Object)
+            {
+                failureReason = "response JSON must be an object";
+                return false;
+            }
+
+            if (!HasPositiveInteger(root, "page") ||
+                !HasPositiveInteger(root, "total_pages") ||
+                !HasPositiveInteger(root, "attempt"))
+            {
+                failureReason = "response must contain positive integer page, total_pages, and attempt fields";
+                return false;
+            }
+
+            if (!root.TryGetProperty("scenario", out var scenario) ||
+                scenario.ValueKind != JsonValueKind.String ||
+                string.IsNullOrWhiteSpace(scenario.GetString()))
+            {
+                failureReason = "response must contain a non-empty string scenario field";
+                return false;
+            }
+
+            if (!root.TryGetProperty("items", out var items) || items.ValueKind != JsonValueKind.Array)
+            {
+                failureReason = "response must contain an items array";
+                return false;
+            }
+
+            var index = 0;
+            foreach (var item in items.EnumerateArray())
+            {
+                if (item.ValueKind != JsonValueKind.Object ||
+                    !HasNonEmptyString(item, "id") ||
+                    !HasNonEmptyString(item, "name") ||
+                    !item.TryGetProperty("price", out var price) ||
+                    price.ValueKind != JsonValueKind.Number ||
+                    !price.TryGetDecimal(out _))
+                {
+                    failureReason = $"items[{index}] must contain non-empty string id and name fields and a numeric price";
+                    return false;
+                }
+
+                index++;
+            }
+        }
+
+        failureReason = string.Empty;
+        return true;
+    }
+
+    private static bool HasPositiveInteger(JsonElement element, string propertyName) =>
+        element.TryGetProperty(propertyName, out var property) &&
+        property.ValueKind == JsonValueKind.Number &&
+        property.TryGetInt32(out var value) &&
+        value > 0;
+
+    private static bool HasNonEmptyString(JsonElement element, string propertyName) =>
+        element.TryGetProperty(propertyName, out var property) &&
+        property.ValueKind == JsonValueKind.String &&
+        !string.IsNullOrWhiteSpace(property.GetString());
 
     private async Task WaitForVisibleAsync(ILocator locator, CancellationToken cancellationToken)
     {
