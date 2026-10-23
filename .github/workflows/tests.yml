@@ -401,6 +401,53 @@ jobs:
         if: always()
         run: docker rm --force selector-config-stand || true
 
+      - name: Verify malformed API response handling
+        shell: bash
+        env:
+          TEST_STAND_IMAGE: ghcr.io/bockuden/resilient-automation-test-stand:1.2.0
+        run: |
+          set +e
+          dotnet run --project src/Automation.Worker/Automation.Worker.csproj --configuration Release --no-build -- --jobs samples/jobs.playwright.malformed-api.jsonl > malformed-api.log 2>&1
+          exit_code=$?
+          set -e
+          cat malformed-api.log
+          if [ "$exit_code" -ne 3 ]; then
+            echo "Malformed API scenarios returned exit code $exit_code; expected 3 for their deliberate contract failures."
+            exit 1
+          fi
+          python - <<'PY'
+          import sqlite3
+          from pathlib import Path
+
+          expected_reasons = {
+              "invalid-json": "response body is not valid JSON",
+              "truncated-json": "response body is not valid JSON",
+              "wrong-content-type": "expected Content-Type application/json",
+              "missing-fields": "response must contain an items array",
+              "wrong-field-type": "response must contain an items array",
+          }
+          with sqlite3.connect("artifacts/automation.db") as connection:
+              for mode, expected_reason in expected_reasons.items():
+                  job_id = f"malformed-api-{mode}"
+                  status, error_message = connection.execute(
+                      "select status, error_message from jobs where job_id = ?", (job_id,)
+                  ).fetchone()
+                  assert status == "Failed", (job_id, status)
+                  assert expected_reason in error_message, (job_id, error_message)
+                  item_count = connection.execute(
+                      "select count(*) from catalog_items where job_id = ?", (job_id,)
+                  ).fetchone()[0]
+                  checkpoint = connection.execute(
+                      "select last_completed_page from checkpoints where job_id = ?", (job_id,)
+                  ).fetchone()
+                  assert item_count == 0, (job_id, item_count)
+                  assert checkpoint is None, (job_id, checkpoint)
+                  evidence = Path("artifacts") / job_id / "1"
+                  assert all((evidence / name).is_file() for name in (
+                      "error.json", "page.html", "screenshot.png", "trace.zip"
+                  )), (job_id, list(evidence.glob("*")))
+          PY
+
       - name: Upload E2E failure artifacts
         if: failure()
         uses: actions/upload-artifact@v6
