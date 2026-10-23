@@ -401,6 +401,11 @@ jobs:
         if: always()
         run: docker rm --force selector-config-stand || true
 
+      - name: Start Test Stand 1.2.0 for malformed response scenarios
+        env:
+          TEST_STAND_IMAGE: ghcr.io/bockuden/resilient-automation-test-stand:1.2.0
+        run: docker compose up --detach --wait demo-site
+
       - name: Verify malformed API response handling
         shell: bash
         env:
