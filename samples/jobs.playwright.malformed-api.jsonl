@@ -1,0 +1,5 @@
+{"jobId":"malformed-api-invalid-json","target":"demo-catalog","startUrl":"http://127.0.0.1:8080/catalog?scenario=malformed-api&malformed_mode=invalid_json&run_id=malformed-api-invalid-json","maxPages":2}
+{"jobId":"malformed-api-truncated-json","target":"demo-catalog","startUrl":"http://127.0.0.1:8080/catalog?scenario=malformed-api&malformed_mode=truncated_json&run_id=malformed-api-truncated-json","maxPages":2}
+{"jobId":"malformed-api-wrong-content-type","target":"demo-catalog","startUrl":"http://127.0.0.1:8080/catalog?scenario=malformed-api&malformed_mode=wrong_content_type&run_id=malformed-api-wrong-content-type","maxPages":2}
+{"jobId":"malformed-api-missing-fields","target":"demo-catalog","startUrl":"http://127.0.0.1:8080/catalog?scenario=malformed-api&malformed_mode=missing_fields&run_id=malformed-api-missing-fields","maxPages":2}
+{"jobId":"malformed-api-wrong-field-type","target":"demo-catalog","startUrl":"http://127.0.0.1:8080/catalog?scenario=malformed-api&malformed_mode=wrong_field_type&run_id=malformed-api-wrong-field-type","maxPages":2}

@@ -4,6 +4,10 @@ All notable changes to Resilient Browser Automation are documented here.
 
 ## Unreleased
 
+- Validate successful catalog API responses against the JSON media type and
+  required field types before browser parsing; reject malformed responses with
+  useful errors and preserve failure evidence without persisting data.
+- Cover all five Test Stand 1.2.0 malformed API modes in Compose compatibility CI.
 - Recover from missing, changed, and delayed browser locator tokens through
   unique semantic fallbacks; fail closed on ambiguous, hidden, or disabled
   targets with browser evidence.

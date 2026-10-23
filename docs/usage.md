@@ -80,6 +80,11 @@ Useful deterministic scenarios:
 | `scenario=success` | Normal dynamically rendered pagination |
 | `scenario=transient&fail_for=2` | First two API requests per page return `503` |
 | `scenario=rate-limit&rate_limit_for=2&retry_after_seconds=1` | On Test Stand 1.2.0+, first two API requests per page return `429` with `Retry-After`, then succeed |
+| `scenario=malformed-api&malformed_mode=invalid_json` | Test Stand 1.2.0 returns a successful response containing invalid JSON |
+| `scenario=malformed-api&malformed_mode=truncated_json` | Test Stand 1.2.0 returns a truncated JSON response |
+| `scenario=malformed-api&malformed_mode=wrong_content_type` | Test Stand 1.2.0 returns JSON with a non-JSON media type |
+| `scenario=malformed-api&malformed_mode=missing_fields` | Test Stand 1.2.0 omits a required catalog response field |
+| `scenario=malformed-api&malformed_mode=wrong_field_type` | Test Stand 1.2.0 returns a catalog field with the wrong JSON type |
 | `scenario=permanent` | Every catalog API request returns `500` |
 | `scenario=slow&delay_ms=3000` | Delayed API response |
 | `scenario=resume&fail_page=3` | Pages 1–2 succeed and page 3 fails |
@@ -88,6 +93,13 @@ Useful deterministic scenarios:
 
 Use a unique `run_id` query value to isolate scenario counters. Reset all
 counters with `POST /admin/reset`.
+
+The worker validates successful catalog API responses before exposing them to
+the page parser. Malformed JSON, an unexpected media type, missing contract
+fields, and incorrectly typed fields fail the job with a specific reason,
+preserve browser failure evidence, and do not commit items or a page checkpoint.
+The Compose compatibility workflow exercises all five malformed response
+modes against the exact Test Stand 1.2.0 image.
 
 `TEST_STAND_IMAGE` can override the Compose image for an explicit compatibility
 check. Normal demos and release validation must leave it unset and use the
