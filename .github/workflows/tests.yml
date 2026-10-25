@@ -453,6 +453,27 @@ jobs:
                   )), (job_id, list(evidence.glob("*")))
           PY
 
+      - name: Replay composite failure sequence with fresh run IDs
+        shell: bash
+        env:
+          TEST_STAND_IMAGE: ghcr.io/bockuden/resilient-automation-test-stand:1.2.0
+        run: |
+          set -e
+          dotnet run --project src/Automation.Worker/Automation.Worker.csproj --configuration Release --no-build -- --jobs samples/jobs.playwright.composite-events.jsonl > composite-events.log 2>&1
+          cat composite-events.log
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          output = Path("composite-events.log").read_text(encoding="utf-8")
+          summaries = [
+              json.loads(line)
+              for line in output.splitlines()
+              if line.startswith('{"completedJobs":')
+          ]
+          assert summaries[-1]["completedJobs"] == 2, summaries
+          assert summaries[-1]["retriesScheduled"] == 2, summaries
+          PY
+
       - name: Upload E2E failure artifacts
         if: failure()
         uses: actions/upload-artifact@v6
