@@ -16,6 +16,11 @@ The current evidence for `1.1.5` is recorded in
 release is not automatically adopted merely because it is newer: changing the
 pin requires a reviewed Compose diff and another complete consumer validation.
 
+The browser compatibility workflow also checks explicit Test Stand 1.2.0
+scenarios without changing the stable Compose pin. The ordered composite
+failure sequence and its verified result are recorded in
+[stand-1.2.0-composite-evidence.md](stand-1.2.0-composite-evidence.md).
+
 ## Contract-change rule
 
 For a Test Stand public-contract change, follow its
