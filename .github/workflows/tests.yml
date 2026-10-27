@@ -216,8 +216,12 @@ jobs:
             throw "Rate-limit worker did not emit its JSON run summary."
           }
           $summary = $summaryLine | ConvertFrom-Json
-          if ($summary.completedJobs -ne 1 -or $summary.retriesScheduled -ne 8) {
-            throw "Rate-limit run summary reported $($summary.completedJobs) completed jobs and $($summary.retriesScheduled) retries; expected 1 job and 8 retries."
+          if ($summary.completedJobs -ne 1 -or $summary.retriesScheduled -ne 6) {
+            throw "Rate-limit run summary reported $($summary.completedJobs) completed jobs and $($summary.retriesScheduled) retries; expected 1 job and 6 retries."
+          }
+          $retryWaits = @($output | Where-Object { $_ -match 'Retry \d+ scheduled after 1000 ms' })
+          if ($retryWaits.Count -ne 6) {
+            throw "Rate-limit run recorded $($retryWaits.Count) one-second retry waits; expected 6."
           }
 
       - name: Verify rate-limit checkpoint and persisted items
@@ -237,8 +241,8 @@ jobs:
                   "select status from jobs where job_id = ?",
                   ("catalog-playwright-rate-limit",),
               ).fetchone()
-          assert checkpoint == (4,), checkpoint
-          assert item_count == 20, item_count
+          assert checkpoint == (3,), checkpoint
+          assert item_count == 15, item_count
           assert status == ("Completed",), status
           PY
 
@@ -263,6 +267,10 @@ jobs:
           $summary = $summaryLine | ConvertFrom-Json
           if ($summary.completedJobs -ne 1 -or $summary.retriesScheduled -ne 0) {
             throw "Session-expiry run reported $($summary.completedJobs) completed jobs and $($summary.retriesScheduled) retries; expected 1 completed job without job retries."
+          }
+          $loginEvents = @($output | Where-Object { $_ -match 'Authenticated protected catalog session' })
+          if ($loginEvents.Count -ne 2) {
+            throw "Session-expiry run recorded $($loginEvents.Count) successful authentications; expected the initial login and one re-authentication."
           }
 
       - name: Verify resumed page and persisted checkpoints
