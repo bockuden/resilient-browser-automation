@@ -552,6 +552,19 @@ jobs:
           assert snapshots[0] == snapshots[1], "fresh run IDs produced different results"
           PY
 
+      - name: Set up Python for Test Stand evidence validation
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install Test Stand 1.2.0 Gauntlet validator
+        run: python -m pip install --disable-pip-version-check resilient-automation-test-stand==1.2.0
+
+      - name: Validate supported Gauntlet evidence
+        run: |
+          automation-gauntlet validate samples/gauntlet/level-7-session-expiry.json
+          automation-gauntlet validate samples/gauntlet/level-8-rate-limiting.json
+
       - name: Upload E2E failure artifacts
         if: failure()
         uses: actions/upload-artifact@v6
