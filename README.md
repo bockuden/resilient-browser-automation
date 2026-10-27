@@ -149,6 +149,7 @@ docs/                       Architecture, operations and release evidence
 | [Troubleshooting](docs/troubleshooting.md) | Common local and Docker failures |
 | [Limitations](docs/limitations.md) | Explicit non-goals and honest positioning |
 | [Compatibility matrix](docs/compatibility-matrix.md) | Exact consumer/stand validation pairs |
+| [Automation Gauntlet evidence](docs/automation-gauntlet.md) | Validated stand 1.2.0 objectives and reproducible evidence |
 | [Release notes](docs/releases/v1.0.0.md) | Stable release behavior and evidence |
 | [Changelog](CHANGELOG.md) | Versioned user-visible changes |
 | [Contributing](CONTRIBUTING.md) | Development and pull-request workflow |

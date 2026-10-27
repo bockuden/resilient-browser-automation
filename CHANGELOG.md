@@ -14,6 +14,10 @@ All notable changes to Resilient Browser Automation are documented here.
 - Read configured `data-testid` tokens from the Test Stand page and cover the
   Test Stand 1.2.0 selector-failure matrix and custom selector configuration in
   Compose compatibility CI.
+- Record successful protected-session re-authentication and validate portable
+  Automation Gauntlet evidence for Test Stand 1.2.0 levels 7 and 8.
+- Publish an explicit machine-readable list of Gauntlet objectives without
+  validated C# scenario coverage.
 
 ### Added
 
