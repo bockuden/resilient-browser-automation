@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "test_stand_version": "1.2.0",
+  "supported_levels": [7, 8],
+  "unsupported_levels": [
+    { "level": 1, "objective": "Complete pagination", "reason": "The compatibility workflow does not yet capture and validate this exact Gauntlet objective." },
+    { "level": 2, "objective": "Bounded transient retries", "reason": "The compatibility workflow does not yet capture and validate this exact Gauntlet objective." },
+    { "level": 3, "objective": "Protected catalog authentication", "reason": "The compatibility workflow does not yet capture and validate this exact Gauntlet objective." },
+    { "level": 4, "objective": "Selector change recovery", "reason": "The compatibility workflow does not yet capture and validate this exact Gauntlet objective." },
+    { "level": 5, "objective": "Cross-page deduplication", "reason": "The compatibility workflow does not yet capture and validate this exact Gauntlet objective." },
+    { "level": 6, "objective": "Checkpoint and resume", "reason": "The compatibility workflow does not yet capture and validate this exact Gauntlet objective." },
+    { "level": 9, "objective": "Multiple API failures", "reason": "The compatibility workflow does not yet capture and validate this exact Gauntlet objective." },
+    { "level": 10, "objective": "Composite recovery", "reason": "The compatibility workflow does not yet capture and validate this exact Gauntlet objective." }
+  ]
+}

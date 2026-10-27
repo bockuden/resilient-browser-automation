@@ -78,14 +78,16 @@ try
     builder.Services.AddSingleton<IBrowserCatalogSessionFactory>(serviceProvider =>
     {
         var browser = serviceProvider.GetRequiredService<IOptions<AutomationWorkerOptions>>().Value.Browser;
-        return new PlaywrightCatalogSessionFactory(new PlaywrightBrowserOptions
-        {
-            Headless = browser.Headless,
-            NavigationTimeoutMilliseconds = browser.NavigationTimeoutSeconds * 1000,
-            OperationTimeoutMilliseconds = browser.OperationTimeoutSeconds * 1000,
-            DemoUsername = browser.DemoUsername,
-            DemoPassword = browser.DemoPassword,
-        });
+        return new PlaywrightCatalogSessionFactory(
+            new PlaywrightBrowserOptions
+            {
+                Headless = browser.Headless,
+                NavigationTimeoutMilliseconds = browser.NavigationTimeoutSeconds * 1000,
+                OperationTimeoutMilliseconds = browser.OperationTimeoutSeconds * 1000,
+                DemoUsername = browser.DemoUsername,
+                DemoPassword = browser.DemoPassword,
+            },
+            serviceProvider.GetRequiredService<ILogger<PlaywrightCatalogSessionFactory>>());
     });
     builder.Services.AddSingleton<IFailureArtifactWriter>(serviceProvider =>
         new FileFailureArtifactWriter(

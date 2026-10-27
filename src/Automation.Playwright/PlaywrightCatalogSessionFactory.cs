@@ -6,12 +6,14 @@ using Automation.Application;
 using Automation.Application.Abstractions;
 using Automation.Core.Jobs;
 using Automation.Core.Results;
+using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
 
 namespace Automation.Playwright;
 
 public sealed class PlaywrightCatalogSessionFactory(
-    PlaywrightBrowserOptions options) : IBrowserCatalogSessionFactory, IAsyncDisposable
+    PlaywrightBrowserOptions options,
+    ILogger<PlaywrightCatalogSessionFactory> logger) : IBrowserCatalogSessionFactory, IAsyncDisposable
 {
     private readonly SemaphoreSlim initializationLock = new(1, 1);
     private IPlaywright? playwright;
@@ -139,6 +141,9 @@ public sealed class PlaywrightCatalogSessionFactory(
         await configuredLoginButton.ClickAsync().WaitAsync(cancellationToken);
         await page.WaitForFunctionAsync("() => window.location.pathname !== '/login'")
             .WaitAsync(cancellationToken);
+        logger.LogInformation(
+            new EventId(3010, "ProtectedCatalogAuthenticationSucceeded"),
+            "Authenticated protected catalog session.");
     }
 
     private async Task WaitForVisibleAsync(ILocator locator, CancellationToken cancellationToken)
